@@ -72,6 +72,7 @@ const LaurelMedal = ({ rank, variant, size = 120, className = "" }: { rank: numb
  * 100 hunters. Includes sticky contextual rank mapping at the bottom.
  */
 export function Leaderboard() {
+  const [timeframe, setTimeframe] = React.useState<"weekly" | "monthly">("monthly");
   const leaderboard = useQuery(api.leaderboard.getLeaderboard);
   const myRank = useQuery(api.leaderboard.getMyRank);
 
@@ -93,19 +94,23 @@ export function Leaderboard() {
 
           {/* Trophy Image */}
           <div className="absolute top-[-30px] md:top-1/2 md:-translate-y-1/2 left-1/2 -translate-x-1/2 md:translate-x-0 md:left-2 w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 shrink-0 z-10 pointer-events-none drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
-            <img 
+            <Image 
               src="/leaderboard_cup.svg" 
               alt="Leaderboard Trophy" 
-              className="w-full h-full object-contain"
+              fill
+              className="object-contain"
+              priority
             />
           </div>
 
           {/* Medal Image (Right Bottom) */}
           <div className="absolute bottom-[-10px] right-[-10px] sm:bottom-0 sm:right-2 w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 shrink-0 z-10 pointer-events-none drop-shadow-xl opacity-90">
-            <img 
+            <Image 
               src="/medal.png" 
               alt="Medal Decoration" 
-              className="w-full h-full object-contain"
+              fill
+              className="object-contain"
+              priority
             />
           </div>
 
@@ -141,6 +146,32 @@ export function Leaderboard() {
               <path d="M2 26 L6 10 L14 18 L22 2 L30 18 L38 10 L42 26 Z" stroke="white" strokeWidth="3" strokeLinejoin="round" />
             </svg>
           </div>
+        </div>
+      </div>
+
+      {/* ── TIMEFRAME TOGGLE ── */}
+      <div className="flex justify-center w-full mb-8 relative z-20">
+        <div className="bg-[#11131A]/80 backdrop-blur-md p-1.5 rounded-full border border-white/5 flex items-center shadow-xl">
+          <button
+            onClick={() => setTimeframe("weekly")}
+            className={`px-8 py-2 rounded-full text-[13px] font-bold tracking-wide transition-all duration-300 ${
+              timeframe === "weekly"
+                ? "bg-white/10 text-white shadow-sm"
+                : "text-white/40 hover:text-white/80"
+            }`}
+          >
+            Weekly
+          </button>
+          <button
+            onClick={() => setTimeframe("monthly")}
+            className={`px-8 py-2 rounded-full text-[13px] font-bold tracking-wide transition-all duration-300 ${
+              timeframe === "monthly"
+                ? "bg-white/10 text-white shadow-sm"
+                : "text-white/40 hover:text-white/80"
+            }`}
+          >
+            Monthly
+          </button>
         </div>
       </div>
 

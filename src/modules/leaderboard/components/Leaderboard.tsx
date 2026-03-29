@@ -6,13 +6,9 @@ import { Trophy, Flame, Medal } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import Image from "next/image";
 
-/**
- * Extracts and formats up to 2 uppercase initials from a full name.
- * 
- * @param name - The full name string
- * @returns Formatted initials (e.g. "John Doe" -> "JD")
- */
+
 function initials(name: string) {
   return name
     .split(" ")
@@ -27,6 +23,48 @@ const PODIUM_COLOR = [
   "from-[#8C90A1] to-[#353846]",   // Rank 1 (center)
   "from-[#4A4D59] to-[#21232B]",   // Rank 3 (right)
 ];
+
+const LaurelMedal = ({ rank, variant, size = 120, className = "" }: { rank: number | string, variant: "gold" | "silver" | "bronze", size?: number, className?: string }) => {
+  const filterStyle = 
+    variant === "gold" ? "sepia-[0.8] hue-rotate-[-30deg] saturate-[3] brightness-110" :
+    variant === "bronze" ? "sepia-[1] hue-rotate-[10deg] saturate-[3.5] brightness-[0.55] contrast-[1.2]" :
+    "";
+    
+  const textProps = {
+    gold: { grad: "from-[#FFF4D2] via-[#E2B961] to-[#A36C22]" },
+    silver: { grad: "from-[#FFFFFF] via-[#C5D0DE] to-[#808E9E]" },
+    bronze: { grad: "from-[#FADBCC] via-[#C97A59] to-[#8C4328]" },
+  }[variant] || { grad: "from-[#FFF] to-[#AAA]" };
+    
+  return (
+    <div className={`relative flex flex-col items-center justify-center ${className}`} style={{ width: size, height: size }}>
+      <div className="relative w-full aspect-square drop-shadow-2xl flex items-center justify-center">
+        <div className={`absolute inset-0 w-full h-full ${filterStyle}`}>
+          <Image 
+            src="/silver-wreath.png" 
+            alt={`${variant} wreath`}
+            fill
+            className="object-contain"
+            quality={100}
+            priority
+          />
+        </div>
+        <span 
+          className={`absolute z-10 bg-gradient-to-b ${textProps.grad} bg-clip-text text-transparent`}
+          style={{ 
+            marginTop: -(size * 0.12),
+            fontSize: size * 0.28, 
+            fontFamily: "'Georgia', 'Times New Roman', serif", 
+            fontWeight: 400,
+            filter: 'drop-shadow(0px 1px 3px rgba(0,0,0,0.8)) drop-shadow(0px 4px 6px rgba(0,0,0,0.4))' 
+          }}
+        >
+          {rank}
+        </span>
+      </div>
+    </div>
+  );
+};
 
 /**
  * Global Leaderboard visualizer component. Displays the top 3 characters on
@@ -45,10 +83,69 @@ export function Leaderboard() {
   const others = top.slice(3);
 
   return (
-    <div className="min-h-full w-full relative pb-12">
+    <div className="min-h-full w-full relative pb-12 pt-6 sm:pt-8">
+
+      {/* ── BANNER ── */}
+      <div className="w-full max-w-[56rem] mx-auto px-4 sm:px-6 mb-8 relative z-20">
+        <div className="relative bg-[#1A1D2A]/80 backdrop-blur-md rounded-2xl sm:rounded-[24px] border border-white/5 shadow-2xl flex flex-col md:flex-row items-center pt-32 pb-8 md:py-10 px-6 sm:px-10 md:pl-[280px] min-h-[160px] overflow-hidden">
+          
+          <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent pointer-events-none" />
+
+          {/* Trophy Image */}
+          <div className="absolute top-[-30px] md:top-1/2 md:-translate-y-1/2 left-1/2 -translate-x-1/2 md:translate-x-0 md:left-2 w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 shrink-0 z-10 pointer-events-none drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
+            <img 
+              src="/leaderboard_cup.svg" 
+              alt="Leaderboard Trophy" 
+              className="w-full h-full object-contain"
+            />
+          </div>
+
+          {/* Medal Image (Right Bottom) */}
+          <div className="absolute bottom-[-10px] right-[-10px] sm:bottom-0 sm:right-2 w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 shrink-0 z-10 pointer-events-none drop-shadow-xl opacity-90">
+            <img 
+              src="/medal.png" 
+              alt="Medal Decoration" 
+              className="w-full h-full object-contain"
+            />
+          </div>
+
+          {/* Banner Content */}
+          <div className="relative z-20 flex flex-col items-center md:items-start text-center md:text-left w-full">
+            {/* Logos / Title Row */}
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 sm:gap-6 mb-4 sm:mb-5">
+              <span className="text-xl sm:text-[22px] font-bold text-white tracking-tight flex items-center">
+                Bounty Monster <span className="inline-block w-4 h-4 sm:w-[18px] sm:h-[18px] rounded-full bg-[#F35520] ml-2.5 shadow-[0_0_12px_rgba(243,85,32,0.4)]" />
+              </span>
+              
+              <div className="flex items-center gap-1.5 sm:gap-2.5">
+                <div className="w-6 h-6 sm:w-[26px] sm:h-[26px] shrink-0 relative">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#657CFF] drop-shadow-md">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <span className="text-lg sm:text-[20px] font-black text-white uppercase tracking-wider font-pop">
+                  TOP HUNTERS
+                </span>
+              </div>
+            </div>
+
+            {/* Description Text */}
+            <p className="text-[#989CAF] text-xs sm:text-[14px] font-medium leading-[1.65] max-w-[420px]">
+              Level up your game! Take on bounties, grow your XP, and climb the leaderboard. The best hunters take home exclusive monthly rewards from <span className="text-[#F35520] font-bold">Bounty Monster</span>.
+            </p>
+          </div>
+          
+          {/* Decorative crown icon */}
+          <div className="absolute bottom-[-10px] left-[45%] md:left-[55%] -translate-x-1/2 opacity-[0.03] select-none pointer-events-none">
+            <svg width="60" height="40" viewBox="0 0 44 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 26 L6 10 L14 18 L22 2 L30 18 L38 10 L42 26 Z" stroke="white" strokeWidth="3" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
+      </div>
 
       {/* ── PODIUM ── */}
-      <div className="relative flex items-end justify-center pt-16 sm:pt-20 mb-12 min-h-[300px] sm:min-h-[400px] gap-2 sm:gap-4 md:gap-8 px-2 sm:px-6 w-full max-w-4xl mx-auto">
+      <div className="relative flex items-end justify-center pt-8 sm:pt-6 mb-12 min-h-[300px] sm:min-h-[400px] gap-2 sm:gap-4 md:gap-8 px-2 sm:px-6 w-full max-w-4xl mx-auto">
 
         {/* Rank 2 */}
         <div className="flex flex-col items-center group relative translate-y-4 flex-1 max-w-[100px] sm:max-w-[128px]">
@@ -58,28 +155,6 @@ export function Leaderboard() {
             transition={{ delay: 0.2 }}
             className="flex flex-col items-center mb-4 sm:mb-6 relative z-10 w-full"
           >
-            {/* Silver crown */}
-            <div className="relative flex items-center justify-center mb-2">
-              <div className="absolute w-8 h-3 bg-slate-400/20 blur-xl rounded-full bottom-0" />
-              <svg width="36" height="24" viewBox="0 0 44 30" fill="none" xmlns="http://www.w3.org/2000/svg"
-                className="relative z-10 drop-shadow-[0_2px_6px_rgba(168,184,200,0.4)]">
-                <defs>
-                  <linearGradient id="crownSilver" x1="0" y1="0" x2="44" y2="30" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#EAEEF2" />
-                    <stop offset="50%" stopColor="#A8B8C8" />
-                    <stop offset="100%" stopColor="#607080" />
-                  </linearGradient>
-                </defs>
-                <path d="M2 26 L6 10 L14 18 L22 2 L30 18 L38 10 L42 26 Z"
-                  fill="url(#crownSilver)" fillOpacity="0.15"
-                  stroke="url(#crownSilver)" strokeWidth="1.5"
-                  strokeLinejoin="round" strokeLinecap="round" />
-                <rect x="2" y="25" width="40" height="3" rx="1.5" fill="url(#crownSilver)" fillOpacity="0.6" />
-                <circle cx="22" cy="4" r="2" fill="url(#crownSilver)" />
-                <circle cx="6.5" cy="11" r="1.5" fill="url(#crownSilver)" fillOpacity="0.8" />
-                <circle cx="37.5" cy="11" r="1.5" fill="url(#crownSilver)" fillOpacity="0.8" />
-              </svg>
-            </div>
             <div className="relative mb-2 sm:mb-3 group-hover:scale-105 transition-transform">
               <Avatar className={`h-12 w-12 sm:h-16 sm:w-16 shadow-lg ${!podiumSlots[0] ? "opacity-20" : ""}`}>
                 {podiumSlots[0]?.avatar && (
@@ -105,7 +180,7 @@ export function Leaderboard() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "circOut" }}
-            className="w-full h-[90px] sm:h-[130px] relative flex justify-center"
+            className="w-full h-[90px] sm:h-[130px] relative flex items-center justify-center"
           >
             <div
               className={`absolute inset-0 bg-gradient-to-b ${PODIUM_COLOR[0]} rounded-t-[12px] sm:rounded-t-[16px] shadow-[inset_0_4px_12px_rgba(255,255,255,0.15)] backdrop-blur-sm`}
@@ -114,9 +189,9 @@ export function Leaderboard() {
                 maskImage: "linear-gradient(to bottom, black 40%, transparent 100%)",
               }}
             />
-            <span className="relative z-10 text-4xl sm:text-6xl font-bold text-white/10 font-pop select-none mt-4 sm:mt-10">
-              2
-            </span>
+            <div className="relative z-10 flex items-center justify-center w-full pointer-events-none drop-shadow-2xl">
+              <LaurelMedal rank={2} variant="silver" size={130} className="sm:scale-110" />
+            </div>
           </motion.div>
         </div>
 
@@ -127,40 +202,6 @@ export function Leaderboard() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center mb-4 sm:mb-6 relative z-10 w-full"
           >
-            {/* Premium SVG crown */}
-            <div className="relative flex items-center justify-center mb-2">
-              {/* Ambient glow */}
-              <div className="absolute w-10 h-4 bg-yellow-400/20 blur-xl rounded-full bottom-0" />
-              <svg
-                width="44"
-                height="30"
-                viewBox="0 0 44 30"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="relative z-10 drop-shadow-[0_2px_8px_rgba(212,175,55,0.5)]"
-              >
-                <defs>
-                  <linearGradient id="crownGold" x1="0" y1="0" x2="44" y2="30" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#F5E27A" />
-                    <stop offset="50%" stopColor="#D4AF37" />
-                    <stop offset="100%" stopColor="#A07820" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M2 26 L6 10 L14 18 L22 2 L30 18 L38 10 L42 26 Z"
-                  fill="url(#crownGold)"
-                  fillOpacity="0.15"
-                  stroke="url(#crownGold)"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-                <rect x="2" y="25" width="40" height="3" rx="1.5" fill="url(#crownGold)" fillOpacity="0.6" />
-                <circle cx="22" cy="4" r="2" fill="url(#crownGold)" />
-                <circle cx="6.5" cy="11" r="1.5" fill="url(#crownGold)" fillOpacity="0.8" />
-                <circle cx="37.5" cy="11" r="1.5" fill="url(#crownGold)" fillOpacity="0.8" />
-              </svg>
-            </div>
             <div className={`relative mb-2 sm:mb-3 group-hover:scale-105 transition-transform z-20 ${!podiumSlots[1] ? "opacity-20" : ""}`}>
               <Avatar className="h-16 w-16 sm:h-20 sm:w-20 shadow-xl">
                 {podiumSlots[1]?.avatar && (
@@ -186,7 +227,7 @@ export function Leaderboard() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "circOut", delay: 0.1 }}
-            className="w-full h-[140px] sm:h-[190px] relative flex justify-center z-10"
+            className="w-full h-[140px] sm:h-[190px] relative flex items-center justify-center z-10"
           >
             <div
               className={`absolute inset-0 bg-gradient-to-b ${PODIUM_COLOR[1]} rounded-t-[14px] sm:rounded-t-[18px] shadow-[inset_0_8px_20px_rgba(255,255,255,0.25)] backdrop-blur-md`}
@@ -195,9 +236,9 @@ export function Leaderboard() {
                 maskImage: "linear-gradient(to bottom, black 40%, transparent 100%)",
               }}
             />
-            <span className="relative z-10 text-5xl sm:text-7xl font-bold text-white/10 font-pop select-none mt-6 sm:mt-12">
-              1
-            </span>
+            <div className="relative z-10 flex items-center justify-center w-full pointer-events-none drop-shadow-2xl">
+              <LaurelMedal rank={1} variant="gold" size={170} className="sm:scale-125" />
+            </div>
           </motion.div>
         </div>
 
@@ -209,28 +250,6 @@ export function Leaderboard() {
             transition={{ delay: 0.3 }}
             className="flex flex-col items-center mb-4 sm:mb-6 relative z-10 w-full"
           >
-            {/* Bronze crown */}
-            <div className="relative flex items-center justify-center mb-2">
-              <div className="absolute w-8 h-3 bg-amber-700/20 blur-xl rounded-full bottom-0" />
-              <svg width="32" height="22" viewBox="0 0 44 30" fill="none" xmlns="http://www.w3.org/2000/svg"
-                className="relative z-10 drop-shadow-[0_2px_6px_rgba(180,100,40,0.4)]">
-                <defs>
-                  <linearGradient id="crownBronze" x1="0" y1="0" x2="44" y2="30" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#E8A870" />
-                    <stop offset="50%" stopColor="#C47D3A" />
-                    <stop offset="100%" stopColor="#7A4010" />
-                  </linearGradient>
-                </defs>
-                <path d="M2 26 L6 10 L14 18 L22 2 L30 18 L38 10 L42 26 Z"
-                  fill="url(#crownBronze)" fillOpacity="0.15"
-                  stroke="url(#crownBronze)" strokeWidth="1.5"
-                  strokeLinejoin="round" strokeLinecap="round" />
-                <rect x="2" y="25" width="40" height="3" rx="1.5" fill="url(#crownBronze)" fillOpacity="0.6" />
-                <circle cx="22" cy="4" r="2" fill="url(#crownBronze)" />
-                <circle cx="6.5" cy="11" r="1.5" fill="url(#crownBronze)" fillOpacity="0.8" />
-                <circle cx="37.5" cy="11" r="1.5" fill="url(#crownBronze)" fillOpacity="0.8" />
-              </svg>
-            </div>
             <div className={`relative mb-2 sm:mb-3 group-hover:scale-105 transition-transform ${!podiumSlots[2] ? "opacity-20" : ""}`}>
               <Avatar className="h-12 w-12 sm:h-16 sm:w-16 shadow-lg">
                 {podiumSlots[2]?.avatar && (
@@ -256,7 +275,7 @@ export function Leaderboard() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "circOut", delay: 0.2 }}
-            className="w-full h-[70px] sm:h-[100px] relative flex justify-center"
+            className="w-full h-[70px] sm:h-[100px] relative flex items-center justify-center"
           >
             <div
               className={`absolute inset-0 bg-gradient-to-b ${PODIUM_COLOR[2]} rounded-t-[12px] sm:rounded-t-[14px] shadow-[inset_0_4px_10px_rgba(255,255,255,0.1)] backdrop-blur-sm`}
@@ -265,9 +284,9 @@ export function Leaderboard() {
                 maskImage: "linear-gradient(to bottom, black 40%, transparent 100%)",
               }}
             />
-            <span className="relative z-10 text-4xl sm:text-6xl font-bold text-white/10 font-pop select-none mt-4 sm:mt-8">
-              3
-            </span>
+            <div className="relative z-10 flex items-center justify-center w-full pointer-events-none drop-shadow-2xl">
+              <LaurelMedal rank={3} variant="bronze" size={110} className="sm:scale-110" />
+            </div>
           </motion.div>
         </div>
       </div>

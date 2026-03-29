@@ -26,6 +26,7 @@ import {
   UserCircle,
   Zap,
   Crosshair,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
@@ -114,45 +115,56 @@ export const AppSidebar = () => {
       </SidebarHeader>
 
       {/* ── CHARACTER CARD ── */}
-      <div className="px-3 py-3 group-data-[collapsible=icon]:hidden">
-        <div className="relative rounded-xl overflow-hidden bg-white/10 border border-white/10 p-3 flex items-end gap-4">
-          <div className="absolute inset-0 bg-gradient-to-t from-primary/40 via-transparent to-transparent pointer-events-none" />
+      <div className="px-3 py-4 group-data-[collapsible=icon]:hidden">
+        <div className="relative group rounded-2xl overflow-hidden bg-gradient-to-b from-white/5 to-black/20 border border-white/10 p-3.5 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all duration-500 hover:border-primary/50 hover:bg-white/5 hover:shadow-[0_0_30px_rgba(var(--color-primary),0.15)] cursor-default">
+          
+          {/* Ambient Glow Effects */}
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-primary/20 via-primary/5 to-transparent pointer-events-none opacity-60 transition-opacity duration-500 group-hover:opacity-100" />
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 blur-[40px] rounded-full pointer-events-none transition-transform duration-700 group-hover:scale-150" />
 
+          {/* Character Image */}
           <div className="relative shrink-0 w-20 h-20 flex items-center justify-center">
+            <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-50 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-500 ease-out" />
             <Image
               src={characterImage}
               alt={characterName}
               width={100}
               height={100}
-              className="object-contain w-full h-full drop-shadow-lg scale-110"
+              className="object-contain w-[125%] h-[125%] drop-shadow-[0_15px_25px_rgba(0,0,0,0.6)] z-10 transition-transform duration-500 ease-out group-hover:scale-110 group-hover:-translate-y-1 relative"
             />
           </div>
 
-          <div className="flex-1 min-w-0 pb-0.5 z-10">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-base font-semibold font-pop text-primary">
-                Lv.{currentLevel}
+          {/* Info Section */}
+          <div className="flex-1 min-w-0 z-10 py-1 flex flex-col justify-center">
+            
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="px-1.5 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(var(--color-primary),0.1)] transition-colors">
+                Lv. {currentLevel}
               </span>
             </div>
-            <p className="text-sidebar-foreground font-semibold text-sm truncate leading-tight">
+            
+            <p className="text-white font-semibold text-[13px] truncate leading-tight mt-1 mb-2 tracking-tight drop-shadow-md">
               {user?.name || characterName}
             </p>
 
-            {/* XP bar */}
-            <div className="mt-1.5">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-[10px] text-sidebar-foreground/50 font-medium">
+            {/* Premium XP bar */}
+            <div className="mt-auto">
+              <div className="flex justify-between items-baseline mb-1.5">
+                <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest drop-shadow-sm">
                   XP
                 </span>
-                <span className="text-[10px] text-sidebar-foreground/50 font-medium">
-                  {xpIntoLevel.toLocaleString()} / {xpForNextLevel.toLocaleString()}
+                <span className="text-[9px] text-white/50 font-bold tracking-wide drop-shadow-sm">
+                  <span className="text-white/90">{xpIntoLevel.toLocaleString()}</span>{" "}
+                  <span className="text-white/30">/</span> {xpForNextLevel.toLocaleString()}
                 </span>
               </div>
-              <div className="h-1 w-full rounded-full bg-sidebar-border overflow-hidden">
+              <div className="h-1.5 w-full rounded-full bg-black border border-white/10 overflow-hidden shadow-inner relative">
                 <div
-                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  className="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-primary/50 to-primary transition-all duration-1000 ease-out shadow-[0_0_12px_rgba(var(--color-primary),0.8)]"
                   style={{ width: `${xpPercent}%` }}
-                />
+                >
+                  <div className="absolute top-0 inset-x-0 h-[1px] bg-white/40 mix-blend-overlay" />
+                </div>
               </div>
             </div>
           </div>
@@ -170,19 +182,28 @@ export const AppSidebar = () => {
                   asChild
                   tooltip={label}
                   isActive={active}
-                  className={`flex items-center gap-4 rounded-xl px-3 py-2 text-sm font-semibold transition-all duration-200 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto ${
+                  className={`relative flex items-center rounded-xl p-1.5 text-sm font-medium transition-all duration-200 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto overflow-visible ${
                     active
-                      ? "text-primary bg-primary/10 shadow-[inset_0_0_0_1px_rgba(var(--color-primary),0.2)]"
+                      ? "text-white !bg-transparent"
                       : "text-white/50 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  <Link href={href} prefetch={true}>
-                    <Icon
-                      className={`size-5 shrink-0 transition-colors ${
-                        active ? "text-white" : "text-sidebar-foreground/50"
-                      }`}
-                    />
-                    <span>{label}</span>
+                  <Link href={href} prefetch={true} className="w-full flex items-center h-full">
+                    {active && (
+                      <>
+                        <div className="absolute -left-[10px] top-1/2 -translate-y-1/2 w-1.5 h-[50%] bg-primary rounded-r-full shadow-[0_0_15px_rgba(var(--color-primary),0.8)] group-data-[collapsible=icon]:hidden" />
+                      </>
+                    )}
+                    
+                    <div className="relative flex items-center justify-center p-1.5 rounded-lg shrink-0 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:mx-auto bg-transparent">
+                      <Icon
+                        className={`size-[18px] shrink-0 transition-colors ${
+                          active ? "text-primary drop-shadow-[0_0_8px_rgba(var(--color-primary),0.5)]" : "text-sidebar-foreground/50"
+                        }`}
+                      />
+                    </div>
+                    
+                    <span className={`ml-3 z-10 group-data-[collapsible=icon]:hidden ${active ? "text-white/90 font-bold tracking-wide" : ""}`}>{label}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -202,19 +223,28 @@ export const AppSidebar = () => {
                   asChild
                   tooltip={label}
                   isActive={active}
-                  className={`flex items-center gap-4 rounded-xl px-3 py-2 text-sm font-semibold transition-all duration-200 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto ${
+                  className={`relative flex items-center rounded-xl p-1.5 text-sm font-medium transition-all duration-200 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto overflow-visible ${
                     active
-                      ? "text-primary bg-primary/10 shadow-[inset_0_0_0_1px_rgba(var(--color-primary),0.2)]"
+                      ? "text-white !bg-transparent"
                       : "text-white/50 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  <Link href={href} prefetch={true}>
-                    <Icon
-                      className={`size-5 shrink-0 transition-colors ${
-                        active ? "text-primary" : "text-sidebar-foreground/50"
-                      }`}
-                    />
-                    <span>{label}</span>
+                  <Link href={href} prefetch={true} className="w-full flex items-center h-full">
+                    {active && (
+                      <>
+                        <div className="absolute -left-[10px] top-1/2 -translate-y-1/2 w-1.5 h-[50%] bg-primary rounded-r-full shadow-[0_0_15px_rgba(var(--color-primary),0.8)] group-data-[collapsible=icon]:hidden" />
+                      </>
+                    )}
+                    
+                    <div className="relative flex items-center justify-center p-1.5 rounded-lg shrink-0 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:mx-auto bg-transparent">
+                      <Icon
+                        className={`size-[18px] shrink-0 transition-colors ${
+                          active ? "text-primary drop-shadow-[0_0_8px_rgba(var(--color-primary),0.5)]" : "text-sidebar-foreground/50"
+                        }`}
+                      />
+                    </div>
+                    
+                    <span className={`ml-3 z-10 group-data-[collapsible=icon]:hidden ${active ? "text-white/90 font-bold tracking-wide" : ""}`}>{label}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

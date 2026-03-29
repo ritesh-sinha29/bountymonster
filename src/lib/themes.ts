@@ -1,4 +1,4 @@
-export type CharacterTheme = "red" | "blue" | "yellow" | "purple" | "rose";
+export type CharacterTheme = "red" | "blue" | "yellow" | "purple" | "rose" | "green" | "orange";
 
 export interface ThemeColors {
   primary: string;
@@ -25,6 +25,14 @@ export const THEME_CONFIG: Record<CharacterTheme, ThemeColors> = {
   rose: {
     primary: "oklch(0.607 0.213 7)",
     secondary: "oklch(0.75 0.15 1)",
+  },
+  green: {
+    primary: "oklch(0.718 0.17 141)",
+    secondary: "oklch(0.8 0.15 141)",
+  },
+  orange: {
+    primary: "oklch(0.68 0.19 43)",
+    secondary: "oklch(0.75 0.15 45)",
   },
 };
 

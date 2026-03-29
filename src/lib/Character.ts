@@ -5,9 +5,9 @@ export const Characters = [
         name: "Ares",
         title: "God of war",
         description: "born in the fire , raised in the fire. Always ready to hunt.",
-        theme: "red",
+        theme: "orange",
         image: "/dragon.png",
-        type: "locked",
+        type: "available", //locked for locking
         maxLevel: 4,
         Power: {
             "Blood Streak": "Consecutive task completions increase XP per task",
@@ -35,7 +35,7 @@ export const Characters = [
         name: "VYREX",
         title: "Master of the void",
         description: "Attention is currency. I mint it.",
-        theme: "yellow",
+        theme: "green",
         image: "/5.png",
         type: "available",
         maxLevel: 4,
@@ -67,7 +67,7 @@ export const Characters = [
         description: "Truth is my weapon",
         theme: "rose",
         image: "/6.png",
-        type: "locked",
+        type: "available",
         maxLevel: 4,
         Power: {
             "Blood Streak": "Consecutive task completions increase XP per task",
@@ -80,6 +80,26 @@ export const Characters = [
 
 // CAHARCTERS COLORS 
 export const themeColors = {
+  orange: {
+    glow: "from-orange-500/40 via-amber-500/40 to-yellow-600/40",
+    text: "text-orange-400",
+    bg: "bg-orange-500",
+    accent: "text-orange-400",
+    bar: "from-orange-600 to-amber-400",
+    shadow: "shadow-[0_0_12px_rgba(249,115,22,0.4)]",
+    border: "border-orange-500/20",
+    iconBg: "bg-orange-500/10",
+  },
+  green: {
+    glow: "from-green-500/40 via-emerald-500/40 to-teal-600/40",
+    text: "text-green-400",
+    bg: "bg-green-500",
+    accent: "text-green-400",
+    bar: "from-green-600 to-emerald-400",
+    shadow: "shadow-[0_0_12px_rgba(34,197,94,0.4)]",
+    border: "border-green-500/20",
+    iconBg: "bg-green-500/10",
+  },
   red: {
     glow: "from-red-500/40 via-orange-500/40 to-rose-600/40",
     text: "text-red-400",

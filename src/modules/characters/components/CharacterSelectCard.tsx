@@ -83,7 +83,9 @@ export function CharacterSelectCard({
             <motion.img
               src={character.image}
               alt={character.name}
-              className="w-[110%] h-auto max-w-none drop-shadow-[0_0_30px_rgba(0,0,0,0.5)] z-10 pointer-events-none transition-transform duration-500 group-hover:scale-110"
+              className={`h-auto max-w-none drop-shadow-[0_0_30px_rgba(0,0,0,0.5)] z-10 pointer-events-none transition-transform duration-500 group-hover:scale-110 ${
+                character.name === "RAXX" ? "w-[85%]" : "w-[110%]"
+              }`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}

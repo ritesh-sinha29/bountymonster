@@ -30,7 +30,7 @@ export const BountyPageView = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [createOpen, setCreateOpen] = useState(false);
 
-  const backendBounties = useQuery(api.bounties.getBounties) || [];
+  const backendBounties = useQuery(api.bounties.getBounties, {}) || [];
 
   const filteredBounties = useMemo(() => {
     let result = backendBounties;

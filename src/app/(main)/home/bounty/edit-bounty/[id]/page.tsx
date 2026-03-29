@@ -4,37 +4,14 @@ import React, { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMutation } from "convex/react";
-import { api } from "../../../../../../convex/_generated/api";
-import { useRouter } from "next/navigation";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../../../../convex/_generated/api";
+import { Id } from "../../../../../../../convex/_generated/dataModel";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { 
-  ArrowLeft,
-  Crosshair,
-  LucideCrosshair,
-} from "lucide-react";
+import { ArrowLeft, Crosshair, LucideCrosshair, Pencil } from "lucide-react";
 import Link from "next/link";
 import { BountyBasicDetails } from "@/modules/bounty/create-bounty/components/BountyBasicDetails";
 import { BountyTaskFields } from "@/modules/bounty/create-bounty/components/BountyTaskFields";
@@ -62,15 +39,29 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 const calculateTotalXP = (taskCount: number) => {
-  return taskCount * 150;
+  if (taskCount <= 0) return 0;
+  if (taskCount === 1) return 250;
+  if (taskCount === 2) return 600;
+  if (taskCount === 3) return 800;
+  if (taskCount === 4) return 1000;
+  if (taskCount === 5) return 1200;
+  
+  const extraTasks = taskCount - 5;
+  return 1200 + extraTasks * 150;
 };
 
-
-const CreateBountyPage = () => {
+const EditBountyPage = () => {
+  const params = useParams();
   const router = useRouter();
+  const bountyId = params.id as Id<"bounties">;
+  
+  const existingBounty = useQuery(api.bounties.getBounty, { id: bountyId });
+  const currentUser = useQuery(api.users.getCurrentUser);
+  
   // @ts-ignore
-  const createBounty = useMutation(api.bounties.createBounty);
+  const updateBounty = useMutation(api.bounties.updateBounty);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -84,7 +75,7 @@ const CreateBountyPage = () => {
       coverImage: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&q=80&w=1000",
       xpReward: undefined,
       requirementLevel: 1,
-      tasks: [{ name: "", description: "", url: "", xp: 150 }],
+      tasks: [{ name: "", description: "", url: "", xp: 0 }],
     },
   });
 
@@ -92,6 +83,31 @@ const CreateBountyPage = () => {
     control: form.control,
     name: "tasks",
   });
+
+  // Load existing data when fetched
+  useEffect(() => {
+    if (existingBounty && currentUser && !dataLoaded) {
+      if (existingBounty.creatorId !== currentUser._id) {
+        toast.error("Unauthorized");
+        router.push("/home/bounty");
+        return;
+      }
+      
+      form.reset({
+        name: existingBounty.name,
+        description: existingBounty.description,
+        maxHunters: existingBounty.maxHunters || 10,
+        reward: existingBounty.reward,
+        currency: existingBounty.currency || "USD",
+        type: existingBounty.type,
+        coverImage: existingBounty.coverImage,
+        xpReward: existingBounty.xpReward,
+        requirementLevel: existingBounty.requirementLevel,
+        tasks: existingBounty.tasks || [{ name: "", description: "", url: "", xp: 0 }],
+      });
+      setDataLoaded(true);
+    }
+  }, [existingBounty, currentUser, form, router, dataLoaded]);
 
   const watchAll = form.watch();
   const xpReward = form.watch("xpReward");
@@ -101,11 +117,11 @@ const CreateBountyPage = () => {
   const currency = form.watch("currency");
 
   useEffect(() => {
-    const totalXP = calculateTotalXP(tasks.length);
+    const totalXP = calculateTotalXP(tasks?.length || 0);
     if (totalXP !== xpReward) {
       form.setValue("xpReward", totalXP, { shouldValidate: true });
     }
-  }, [tasks.length, form, xpReward]);
+  }, [tasks?.length, form, xpReward]);
 
   const getCurrencySymbol = (code: string) => {
     const symbols: Record<string, string> = {
@@ -115,7 +131,7 @@ const CreateBountyPage = () => {
     };
     return symbols[code] || code;
   };
-  const currencySymbol = getCurrencySymbol(currency);
+  const currencySymbol = getCurrencySymbol(currency || "USD");
   const rewardPerHunter = Math.floor((reward || 0) / (maxHunters > 0 ? maxHunters : 1));
 
   const onSubmit = async (values: FormValues) => {
@@ -128,7 +144,8 @@ const CreateBountyPage = () => {
         xp: finalXPPerTask 
       }));
 
-      await createBounty({
+      await updateBounty({
+        id: bountyId,
         name: values.name,
         description: values.description,
         reward: values.reward,
@@ -142,34 +159,42 @@ const CreateBountyPage = () => {
         tasks: finalTasks,
       });
 
-      toast.success("Bounty launched successfully!");
-      router.push("/home/bounty");
+      toast.success("Bounty updated successfully!");
+      router.push(`/home/bounty/${bountyId}`);
     } catch (error) {
-      toast.error("Failed to create bounty.");
+      toast.error("Failed to update bounty.");
       console.error(error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const currentTaskXP = Math.floor(xpReward / (tasks.length || 1));
+  const currentTaskXP = Math.floor((xpReward || 0) / (tasks?.length || 1));
+
+  if (existingBounty === undefined || currentUser === undefined) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
       <div className="max-w-[1400px] mx-auto px-6 py-10">
         <Link 
-          href="/home/bounty" 
+          href={`/home/bounty/${bountyId}`} 
           className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-6 w-fit"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-medium">Back to Bounties</span>
+          <span className="text-sm font-medium">Back to Bounty</span>
         </Link>
         
         <div className="flex flex-col gap-2 mb-10">
           <h1 className="text-2xl font-black tracking-tighter uppercase italic">
-            Create <span className="text-primary">Bounty</span> <Crosshair className="h-5 w-5 inline ml-2"/>
+            Edit <span className="text-primary">Bounty</span> <Pencil className="h-5 w-5 inline ml-2"/>
           </h1>
-          <p className="text-muted-foreground text-lg">Define the challenge, set the rewards, and let the hunters begin.</p>
+          <p className="text-muted-foreground text-lg">Update the Bounty parameters and objectives.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -185,14 +210,14 @@ const CreateBountyPage = () => {
                   disabled={isSubmitting}
                   className="w-full h-10 text-lg font-bold text-white tracking-widest shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:shadow-[0_0_30px_rgba(var(--primary),0.5)] transition-all cursor-pointer"
                 >
-                  {isSubmitting ? "FORGING BOUNTY..." : "LAUNCH BOUNTY"} <LucideCrosshair className="w-4 h-4" />
+                  {isSubmitting ? "UPDATING BOUNTY..." : "SAVE CHANGES"} <LucideCrosshair className="w-4 h-4" />
                 </Button>
               </form>
             </Form>
           </div>
 
           <div className="lg:col-span-5 relative">
-            <BountyPreview watchAll={watchAll} tasksCount={tasks.length} reward={reward} currencySymbol={currencySymbol} />
+            <BountyPreview watchAll={watchAll} tasksCount={tasks?.length || 0} reward={reward || 0} currencySymbol={currencySymbol} />
           </div>
         </div>
       </div>
@@ -200,4 +225,4 @@ const CreateBountyPage = () => {
   );
 };
 
-export default CreateBountyPage;
+export default EditBountyPage;

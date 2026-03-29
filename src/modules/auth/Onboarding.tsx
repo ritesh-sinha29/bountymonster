@@ -113,6 +113,7 @@ const Onboarding = () => {
       await completeOnboarding({
         characterName: character.name,
         theme: character.theme,
+        userAvatar: character.image, // store character image as the user's avatar
       });
       toast.success("Welcome to Bounty Monster! Onboarding complete.");
       router.push("/home");

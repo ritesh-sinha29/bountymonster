@@ -12,6 +12,8 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { Characters } from "@/lib/Character";
+import { getXpProgress } from "@/lib/xpConfig";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Doc } from "../../../../convex/_generated/dataModel";
@@ -19,19 +21,15 @@ import {
   Home,
   Swords,
   Search,
-  Users,
   UserPlus,
   Trophy,
-  Heart,
   UserCircle,
-  Settings,
   Zap,
   Crosshair,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const NAV_MAIN = [
   { label: "Home", href: "/home", icon: Home },
@@ -42,29 +40,37 @@ const NAV_MAIN = [
 ];
 
 const NAV_FOOTER = [
-  { label: "Favourites", href: "/home/favourites", icon: Heart },
   { label: "Profile", href: "/home/profile", icon: UserCircle },
 ];
 
-const FAKE_CHARACTER = {
-  name: "Shadow Viper",
-  xp: 4200,
-  xpMax: 5000,
-  level: 12,
-  image: "/dragon.png",
-};
+const ALL_ROUTES = [
+  "/home",
+  "/home/bounty",
+  "/home/leaderboard",
+  "/home/search",
+  "/home/characters",
+  "/home/profile",
+  "/home/bounty/create-bounty",
+];
 
+/**
+ * Primary application sidebar for navigation and user context.
+ * Prefetches primary routes for instant transitions and displays synchronized
+ * realtime character and user progress details.
+ */
 export const AppSidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    ALL_ROUTES.forEach((route) => router.prefetch(route));
+  }, [router]);
 
   const user: Doc<"users"> | undefined | null = useQuery(
     api.users.getCurrentUser,
   );
 
-  const [themeFeedback, setThemeFeedback] = useState(false);
-  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -72,15 +78,16 @@ export const AppSidebar = () => {
   const isActive = (href: string) =>
     href === "/home" ? pathname === href : pathname.startsWith(href);
 
-  const xpPercent = Math.round(
-    (FAKE_CHARACTER.xp / FAKE_CHARACTER.xpMax) * 100,
-  );
+  const characterData = useQuery(api.characters.getCurrentCharacter);
 
-  const handleThemeClick = () => {
-    setThemeFeedback(true);
-    setTheme(theme === "dark" ? "light" : "dark");
-    setTimeout(() => setThemeFeedback(false), 300);
-  };
+  const characterObj = Characters.find((c) => c.name === characterData?.characterName);
+  const characterImage = characterObj?.image || Characters[0].image;
+  const characterName = characterData?.characterName || "Anonymous";
+  const currentXp = characterData?.xp ?? 0;
+  const { level: currentLevel, xpIntoLevel, xpForNextLevel, percent: xpPercent } = getXpProgress(currentXp);
+
+  // Avoid hydration mismatch on visual client elements
+  if (!mounted) return null;
 
   return (
     <Sidebar
@@ -111,24 +118,24 @@ export const AppSidebar = () => {
         <div className="relative rounded-xl overflow-hidden bg-white/10 border border-white/10 p-3 flex items-end gap-4">
           <div className="absolute inset-0 bg-gradient-to-t from-primary/40 via-transparent to-transparent pointer-events-none" />
 
-          <div className="relative shrink-0 w-18 h-18 flex items-end justify-center">
+          <div className="relative shrink-0 w-20 h-20 flex items-center justify-center">
             <Image
-              src={FAKE_CHARACTER.image}
-              alt={FAKE_CHARACTER.name}
+              src={characterImage}
+              alt={characterName}
               width={100}
               height={100}
-              className="object-contain scale-[1.15] translate-y-1 drop-shadow-lg"
+              className="object-contain w-full h-full drop-shadow-lg scale-110"
             />
           </div>
 
           <div className="flex-1 min-w-0 pb-0.5 z-10">
             <div className="flex items-center gap-1.5 mb-0.5">
               <span className="text-base font-semibold font-pop text-primary">
-                Lv.{FAKE_CHARACTER.level}
+                Lv.{currentLevel}
               </span>
             </div>
             <p className="text-sidebar-foreground font-semibold text-sm truncate leading-tight">
-              {FAKE_CHARACTER.name}
+              {user?.name || characterName}
             </p>
 
             {/* XP bar */}
@@ -138,8 +145,7 @@ export const AppSidebar = () => {
                   XP
                 </span>
                 <span className="text-[10px] text-sidebar-foreground/50 font-medium">
-                  {FAKE_CHARACTER.xp.toLocaleString()} /{" "}
-                  {FAKE_CHARACTER.xpMax.toLocaleString()}
+                  {xpIntoLevel.toLocaleString()} / {xpForNextLevel.toLocaleString()}
                 </span>
               </div>
               <div className="h-1 w-full rounded-full bg-sidebar-border overflow-hidden">
@@ -170,7 +176,7 @@ export const AppSidebar = () => {
                       : "text-white/50 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  <Link href={href}>
+                  <Link href={href} prefetch={true}>
                     <Icon
                       className={`size-5 shrink-0 transition-colors ${
                         active ? "text-white" : "text-sidebar-foreground/50"
@@ -202,7 +208,7 @@ export const AppSidebar = () => {
                       : "text-white/50 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  <Link href={href}>
+                  <Link href={href} prefetch={true}>
                     <Icon
                       className={`size-5 shrink-0 transition-colors ${
                         active ? "text-primary" : "text-sidebar-foreground/50"
@@ -217,7 +223,7 @@ export const AppSidebar = () => {
         </SidebarMenu>
 
         <div className="flex flex-col gap-2 mt-2 px-1 group-data-[collapsible=icon]:px-0">
-          <Link href="/home/bounty/create-bounty">
+          <Link href="/home/bounty/create-bounty" prefetch={true}>
             <Button
               variant="secondary"
               className="w-full justify-start gap-2 bg-primary/20 text-white border border-primary/30 hover:bg-primary/30 cursor-pointer font-bold text-xs h-10 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto overflow-hidden transition-all"
@@ -257,8 +263,6 @@ export const AppSidebar = () => {
             </div>
           </Link>
         </div>
-
-       
       </SidebarFooter>
     </Sidebar>
   );

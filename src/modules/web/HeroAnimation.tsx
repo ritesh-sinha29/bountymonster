@@ -35,7 +35,7 @@ const HeroAnimation = () => {
                   </h3>
                   <div className="flex items-center gap-2">
                     <span className="text-gray-400 text-xs font-medium">
-                      Active missions right now
+                      Active bounties right now
                     </span>
                   </div>
                 </div>
@@ -124,7 +124,7 @@ const HeroAnimation = () => {
                   </h3>
                   <div className="flex items-center gap-2">
                     <span className="text-gray-400 text-xs font-medium">
-                      Active missions right now
+                      Active bounties right now
                     </span>
                   </div>
                 </div>

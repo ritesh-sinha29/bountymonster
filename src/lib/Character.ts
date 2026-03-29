@@ -62,7 +62,7 @@ export const Characters = [
     },
     {
         id: 5,
-        name: "AEGIS",
+        name: "EVA",
         title: "The Proof warden",
         description: "Truth is my weapon",
         theme: "rose",

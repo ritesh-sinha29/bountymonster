@@ -32,6 +32,10 @@ const BOOSTED_POSTS = [
   },
 ];
 
+/**
+ * Animated carousel component for highlighting premium or featured bounties.
+ * Cycles through top-tier content on an interval to draw user attention.
+ */
 export const BoostedBounties = () => {
   const [index, setIndex] = useState(0);
 
@@ -67,7 +71,7 @@ export const BoostedBounties = () => {
               variant="outline"
               className="mb-3 text-[10px] border-primary/40 text-primary bg-primary/5 uppercase font-bold tracking-widest px-3"
             >
-              Featured Mission
+              Featured Bounty
             </Badge>
             <motion.h3 
               initial={{ opacity: 0, y: 10 }}
@@ -89,7 +93,6 @@ export const BoostedBounties = () => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Navigation Dots */}
       <div className="absolute bottom-6 right-8 flex gap-1.5 z-20">
         {BOOSTED_POSTS.map((_, i) => (
           <button
@@ -105,7 +108,6 @@ export const BoostedBounties = () => {
         ))}
       </div>
 
-      {/* Slide Counter */}
       <div className="absolute top-6 right-8 z-20 mix-blend-difference">
          <span className="text-[10px] font-black text-white/40 tracking-widest uppercase">
            {String(index + 1).padStart(2, '0')} / {String(BOOSTED_POSTS.length).padStart(2, '0')}

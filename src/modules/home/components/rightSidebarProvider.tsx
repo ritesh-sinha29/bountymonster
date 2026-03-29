@@ -2,8 +2,9 @@
 
 import React, { createContext, useContext, useState, useCallback } from "react";
 
-// ─── Context ──────────────────────────────────────────────────────────────────
-
+/**
+ * Interface defining the right sidebar state and actions context.
+ */
 type RightSidebarContextProps = {
   isOpen: boolean;
   open: () => void;
@@ -13,14 +14,19 @@ type RightSidebarContextProps = {
 
 const RightSidebarContext = createContext<RightSidebarContextProps | null>(null);
 
+/**
+ * Convenience hook that surfaces right sidebar state and triggers.
+ * Must be used within the appropriate context provider boundaries.
+ */
 export function useRightSidebar() {
   const ctx = useContext(RightSidebarContext);
   if (!ctx) throw new Error("useRightSidebar must be used within <RightSidebarProvider>");
   return ctx;
 }
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
-
+/**
+ * Context Provider encapsulating state for toggling the Right Sidebar interface.
+ */
 export function RightSidebarProvider({
   children,
   defaultOpen = false,

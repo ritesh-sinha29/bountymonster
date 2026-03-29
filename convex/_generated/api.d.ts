@@ -9,6 +9,10 @@
  */
 
 import type * as bounties from "../bounties.js";
+import type * as characters from "../characters.js";
+import type * as leaderboard from "../leaderboard.js";
+import type * as notifications from "../notifications.js";
+import type * as participants from "../participants.js";
 import type * as users from "../users.js";
 
 import type {
@@ -19,6 +23,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   bounties: typeof bounties;
+  characters: typeof characters;
+  leaderboard: typeof leaderboard;
+  notifications: typeof notifications;
+  participants: typeof participants;
   users: typeof users;
 }>;
 

@@ -1,38 +1,36 @@
 "use client";
 
-import { Bell, MessageCircle, UserPlus } from "lucide-react";
+import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRightSidebar } from "./rightSidebarProvider";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
-// Total badge count across all tabs
-const TOTAL_BADGE = 8;
-
+/**
+ * Button component that triggers the right sidebar, displaying
+ * indicating badges for unread user notification counts.
+ */
 export function RightSidebarTrigger({ className }: { className?: string }) {
   const { toggle, isOpen } = useRightSidebar();
+  const unreadCount = useQuery(api.notifications.getUnreadCount) ?? 0;
 
   return (
     <button
       onClick={toggle}
-      title="Toggle panel"
+      title="Notifications"
       className={cn(
-        "relative flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-all duration-150",
+        "relative flex items-center justify-center size-9 rounded-lg transition-all duration-150",
         isOpen
           ? "bg-primary text-white"
           : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground",
         className
       )}
     >
-      {/* Three mini icons stacked */}
-      <div className="flex items-center gap-4">
-        <Bell className="size-4" />
-        <UserPlus className="size-4" />
-        <MessageCircle className="size-4" />
-      </div>
+      <Bell className="size-4" />
 
-      {/* Badge */}
-      {!isOpen && TOTAL_BADGE > 0 && (
-        <span className="absolute -top-1 -right-1 size-4 rounded-full bg-primary text-white text-[9px] font-bold flex items-center justify-center">
-          {TOTAL_BADGE}
+      {!isOpen && unreadCount > 0 && (
+        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-white text-[9px] font-bold flex items-center justify-center">
+          {unreadCount > 99 ? "99+" : unreadCount}
         </span>
       )}
     </button>

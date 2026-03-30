@@ -1,4 +1,6 @@
 "use client";
+import { useEffect } from "react";
+import { preloadImages, APP_IMAGES_TO_PRELOAD } from "@/hooks/use-image-preloader";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -15,6 +17,10 @@ import { Authenticated, Unauthenticated } from "convex/react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { isLoading: isStoreLoading } = useStoreUser();
+
+  useEffect(() => {
+    preloadImages([...APP_IMAGES_TO_PRELOAD]);
+  }, []);
 
   return (
     <>

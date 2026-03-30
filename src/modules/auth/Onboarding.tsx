@@ -41,6 +41,7 @@ import { useMutation } from "convex/react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { api } from "../../../convex/_generated/api";
+import { preloadImages, APP_IMAGES_TO_PRELOAD } from "@/hooks/use-image-preloader";
 
 const Onboarding = () => {
   const router = useRouter();
@@ -93,6 +94,8 @@ const Onboarding = () => {
         occupation: formData.occupation,
         socialLinks: formData.socials.map(s => ({ platform: s.platform, url: s.link })).filter(s => s.url),
       });
+      
+      preloadImages([...APP_IMAGES_TO_PRELOAD]);
       setStep(3);
     } catch (error) {
       toast.error("Failed to update profile details");

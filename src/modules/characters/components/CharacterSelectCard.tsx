@@ -217,12 +217,7 @@ export function CharacterSelectCard({
           </div>
         </div>
 
-        {/* Character Title Label (Strictly beneath card inner bounds, always visible) */}
-        <div className="absolute -bottom-6 left-0 right-0 text-center z-50">
-          <p className="text-[9px] font-black uppercase tracking-widest drop-shadow-lg" style={{ color: borderColor }}>
-            {character.title}
-          </p>
-        </div>
+
 
         {/* BACK SIDE */}
         <div
@@ -267,6 +262,17 @@ export function CharacterSelectCard({
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Character title — outside the flipper so it never rotates */}
+      <div
+        className={`absolute -bottom-6 left-0 right-0 text-center z-50 pointer-events-none transition-opacity duration-300 ${
+          isFlipped ? "opacity-0" : "opacity-100"
+        }`}
+      >
+        <p className="text-[9px] font-black uppercase tracking-widest drop-shadow-lg" style={{ color: borderColor }}>
+          {character.title}
+        </p>
       </div>
     </div>
   );

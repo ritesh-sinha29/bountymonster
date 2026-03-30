@@ -37,7 +37,7 @@ export const Characters = [
         description: "born in the fire , raised in the fire. Always ready to hunt.",
         theme: "blue",
         image: "/4.png",
-        type: "available",
+        type: "locked",
         maxLevel: 4,
         Power: {
             "Blood Streak": "Consecutive task completions increase XP per task",
@@ -89,6 +89,9 @@ export const themeColors = {
     shadow: "shadow-[0_0_12px_rgba(249,115,22,0.4)]",
     border: "border-orange-500/20",
     iconBg: "bg-orange-500/10",
+    borderColorHex: "#f97316", // orange-500
+    ornament: "gears",
+    bgPattern: "url(\"data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 0 0 L 100 100 M 100 0 L 0 100' stroke='rgba(249,115,22,0.1)' stroke-width='2'/%3E%3Ccircle cx='50' cy='50' r='20' stroke='rgba(249,115,22,0.1)' fill='none' stroke-width='2'/%3E%3C/svg%3E\")",
   },
   green: {
     glow: "from-green-500/40 via-emerald-500/40 to-teal-600/40",
@@ -99,6 +102,9 @@ export const themeColors = {
     shadow: "shadow-[0_0_12px_rgba(34,197,94,0.4)]",
     border: "border-green-500/20",
     iconBg: "bg-green-500/10",
+    borderColorHex: "#22c55e", // green-500
+    ornament: "swirls",
+    bgPattern: "url(\"data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 0 60 Q 30 0 60 60 T 120 60' stroke='rgba(34,197,94,0.1)' stroke-width='3' fill='none'/%3E%3Cpath d='M 0 40 Q 30 -20 60 40 T 120 40' stroke='rgba(34,197,94,0.05)' stroke-width='3' fill='none'/%3E%3Cpath d='M 0 80 Q 30 20 60 80 T 120 80' stroke='rgba(34,197,94,0.05)' stroke-width='3' fill='none'/%3E%3C/svg%3E\")",
   },
   red: {
     glow: "from-red-500/40 via-orange-500/40 to-rose-600/40",
@@ -119,6 +125,9 @@ export const themeColors = {
     shadow: "shadow-[0_0_12px_rgba(59,130,246,0.4)]",
     border: "border-blue-500/20",
     iconBg: "bg-blue-500/10",
+    borderColorHex: "#3b82f6", // blue-500
+    ornament: "star",
+    bgPattern: "url(\"data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cg stroke='rgba(59,130,246,0.1)' fill='none' stroke-width='1.5'%3E%3Ccircle cx='100' cy='100' r='50'/%3E%3Ccircle cx='100' cy='100' r='75' stroke-dasharray='4 4'/%3E%3Ccircle cx='100' cy='100' r='100'/%3E%3Cpath d='M 100 0 L 100 200 M 0 100 L 200 100 M 29 29 L 171 171 M 171 29 L 29 171' stroke-dasharray='3 8'/%3E%3C/g%3E%3C/svg%3E\")",
   },
   yellow: {
     glow: "from-yellow-500/40 via-amber-500/40 to-orange-600/40",
@@ -139,6 +148,9 @@ export const themeColors = {
     shadow: "shadow-[0_0_12px_rgba(168,85,247,0.4)]",
     border: "border-purple-500/20",
     iconBg: "bg-purple-500/10",
+    borderColorHex: "#a855f7", // purple-500
+    ornament: "ribbon",
+    bgPattern: "url(\"data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0 L80 40 L40 80 L0 40 Z' stroke='rgba(168,85,247,0.1)' fill='none' stroke-width='2'/%3E%3Cpath d='M20 20 L60 60 M60 20 L20 60' stroke='rgba(168,85,247,0.05)' stroke-width='1'/%3E%3C/svg%3E\")",
   },
   rose: {
     glow: "from-rose-500 via-rose-500/40 to-violet-600/40",
@@ -147,7 +159,10 @@ export const themeColors = {
     accent: "text-rose-400",
     bar: "from-rose-600 to-rose-400",
     shadow: "shadow-[0_0_12px_rgba(236,72,153,0.4)]",
-    border: "border-pink-500/20",
-    iconBg: "bg-pink-500/10",
+    border: "border-rose-500/20",
+    iconBg: "bg-rose-500/10",
+    borderColorHex: "#f43f5e", // rose-500
+    ornament: "runes",
+    bgPattern: "url(\"data:image/svg+xml,%3Csvg width='150' height='150' viewBox='0 0 150 150' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='75' cy='75' r='60' stroke='rgba(236,72,153,0.1)' fill='none' stroke-width='2' stroke-dasharray='10 5'/%3E%3Cpath d='M75 15 L75 135 M15 75 L135 75' stroke='rgba(236,72,153,0.1)' stroke-width='1.5'/%3E%3Ccircle cx='75' cy='75' r='40' stroke='rgba(236,72,153,0.1)' fill='none' stroke-width='1'/%3E%3C/svg%3E\")",
   },
 };

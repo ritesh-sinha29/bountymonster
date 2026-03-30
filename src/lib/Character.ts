@@ -17,6 +17,21 @@ export const Characters = [
     },
     {
         id: 2,
+        name: "AEGIS",
+        title: "The Proof warden",
+        description: "Truth is my weapon",
+        theme: "purple",
+        image: "/3.png",
+        type: "available",
+        maxLevel: 4,
+        Power: {
+            "Blood Streak": "Consecutive task completions increase XP per task",
+            "No-Sleep Protocol": "Increases the amount of XP gained from tasks",
+            "Dexterity": "Increases the amount of XP gained from tasks",
+        }
+    },
+    {
+        id: 3,
         name: "RAXX",
         title: "Goodnes of Wisdom",
         description: "born in the fire , raised in the fire. Always ready to hunt.",
@@ -30,28 +45,13 @@ export const Characters = [
             "Dexterity": "Increases the amount of XP gained from tasks",
         },
     },
-       {
-        id: 3,
+    {
+        id: 4,
         name: "VYREX",
         title: "Master of the void",
         description: "Attention is currency. I mint it.",
         theme: "green",
         image: "/5.png",
-        type: "available",
-        maxLevel: 4,
-        Power: {
-            "Blood Streak": "Consecutive task completions increase XP per task",
-            "No-Sleep Protocol": "Increases the amount of XP gained from tasks",
-            "Dexterity": "Increases the amount of XP gained from tasks",
-        }
-    },
-    {
-        id: 4,
-        name: "AEGIS",
-        title: "The Proof warden",
-        description: "Truth is my weapon",
-        theme: "purple",
-        image: "/3.png",
         type: "available",
         maxLevel: 4,
         Power: {

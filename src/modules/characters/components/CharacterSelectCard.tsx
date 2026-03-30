@@ -79,7 +79,8 @@ export function CharacterSelectCard({
               : "bg-neutral-900/60 group-hover:bg-neutral-800/40"
           }`}
         >
-          <div className="relative flex-1 flex items-center justify-center overflow-hidden">
+          <div className={`absolute inset-0 bg-linear-to-tl ${theme.glow} opacity-20 z-0 pointer-events-none`} />
+          <div className="relative flex-1 flex items-center justify-center overflow-hidden z-10">
             <motion.img
               src={character.image}
               alt={character.name}
@@ -94,15 +95,15 @@ export function CharacterSelectCard({
             <div
               className={`absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t z-20 transition-opacity duration-300 ${
                 isActive
-                  ? "from-primary/60 via-primary/20 to-transparent opacity-100"
-                  : "from-black/60 via-black/20 to-transparent opacity-80 group-hover:from-white/10"
+                  ? "from-primary/80 via-primary/30 to-transparent opacity-100"
+                  : "from-black/80 via-black/30 to-transparent opacity-100"
               }`}
             />
 
-            <div className="absolute inset-0 flex flex-col justify-end p-4 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-y-2">
+            <div className="absolute inset-0 flex flex-col justify-end p-4 z-30 transition-all duration-300 space-y-2">
               <button
                 onClick={() => !locked && onSelect()}
-                className={`w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                className={`w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-300 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto ${
                   locked
                     ? "bg-neutral-800 text-neutral-500 cursor-not-allowed"
                     : isActive
@@ -120,11 +121,11 @@ export function CharacterSelectCard({
               </button>
             </div>
 
-            <div className="absolute inset-x-0 bottom-4 z-20 text-center pointer-events-none group-hover:opacity-0 transition-opacity duration-300">
-              <h2 className="text-xl font-black tracking-tighter text-white uppercase">
+            <div className="absolute inset-x-0 top-6 z-20 text-center pointer-events-none transition-opacity duration-300 drop-shadow-lg">
+              <h2 className="text-xl font-black tracking-tighter text-white uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                 {character.name}
               </h2>
-              <div className="h-0.5 w-8 bg-primary mx-auto mt-1 opacity-60" />
+              <div className="h-0.5 w-8 bg-primary mx-auto mt-1 opacity-80" />
             </div>
 
             <div className="absolute top-3 right-3 z-30">

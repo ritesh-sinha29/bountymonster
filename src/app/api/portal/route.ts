@@ -16,22 +16,26 @@ export const dynamic = "force-dynamic";
  * Requires the user to be signed in (Clerk) and have a polarCustomerId
  * stored in Convex from a previous checkout.
  */
-export const GET = CustomerPortal({
-  accessToken: process.env.POLAR_ACCESS_TOKEN!,
-  server: (process.env.POLAR_SERVER as "sandbox" | "production") ?? "sandbox",
-  getCustomerId: async () => {
-    const { userId } = await auth();
-    if (!userId) throw new Error("Unauthorized");
+import { NextRequest } from "next/server";
 
-    const subscription = await fetchQuery(api.subscriptions.getByClerkId, {
-      clerkId: userId,
-    });
+export const GET = (req: NextRequest) => {
+  return CustomerPortal({
+    accessToken: process.env.POLAR_ACCESS_TOKEN!,
+    server: (process.env.POLAR_SERVER as "sandbox" | "production") ?? "sandbox",
+    getCustomerId: async () => {
+      const { userId } = await auth();
+      if (!userId) throw new Error("Unauthorized");
 
-    if (!subscription?.polarCustomerId) {
-      throw new Error("No active subscription found for this user.");
-    }
+      const subscription = await fetchQuery(api.subscriptions.getByClerkId, {
+        clerkId: userId,
+      });
 
-    return subscription.polarCustomerId;
-  },
-  returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/home`,
-});
+      if (!subscription?.polarCustomerId) {
+        throw new Error("No active subscription found for this user.");
+      }
+
+      return subscription.polarCustomerId;
+    },
+    returnUrl: `${req.nextUrl.origin}/subscription`,
+  })(req);
+};

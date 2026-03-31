@@ -268,7 +268,7 @@ export const AppSidebar = () => {
 
         <div className="mt-2 group-data-[collapsible=icon]:hidden">
           <Link
-            href="/home/upgrade"
+            href="/subscription"
             className="
               relative flex flex-col w-full rounded-lg p-3.5 overflow-hidden
               bg-white/5 border border-white/10 

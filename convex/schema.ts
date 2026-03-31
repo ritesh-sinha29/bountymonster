@@ -131,4 +131,22 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_userId_milestone", ["userId", "milestoneKey"]),
+
+  /**
+   * Polar.sh subscription records.
+   * Written by the /api/webhooks/polar route on every subscription event.
+   * clerkId links back to the authenticated user (used as externalId in Polar).
+   */
+  subscriptions: defineTable({
+    clerkId: v.string(),           // Clerk user ID (external reference)
+    polarCustomerId: v.string(),   // Polar customer ID (for portal redirects)
+    polarSubscriptionId: v.string(),
+    productId: v.string(),
+    priceId: v.string(),
+    status: v.string(),            // "active" | "canceled" | "past_due" | etc.
+    currentPeriodEnd: v.number(),  // Unix timestamp (ms)
+  })
+    .index("by_clerkId", ["clerkId"])
+    .index("by_polarCustomerId", ["polarCustomerId"])
+    .index("by_polarSubscriptionId", ["polarSubscriptionId"]),
 });

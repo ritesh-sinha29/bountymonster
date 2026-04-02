@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
  * Renders a visually faithful preview of the bounty currently being created.
  * Synchronizes with real-time form state to give creators immediate feedback.
  */
-export const BountyPreview = ({ watchAll, tasksCount, reward, currencySymbol }: { watchAll: any; tasksCount: number; reward: number; currencySymbol: string }) => {
+export const BountyPreview = ({ watchAll, tasksCount, reward }: { watchAll: any; tasksCount: number; reward: number }) => {
   return (
     <div className="lg:sticky lg:top-10 space-y-6">
       <div className="flex items-center justify-between px-2">
@@ -45,13 +45,13 @@ export const BountyPreview = ({ watchAll, tasksCount, reward, currencySymbol }: 
           </div>
 
           <div className="absolute bottom-8 left-8 right-8">
-             <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter leading-none mb-2 break-words line-clamp-2">
+             <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter leading-none mb-2 wrap-break-word line-clamp-2">
                {watchAll.name || "UNNAMED BOUNTY"}
              </h3>
              <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5 text-orange-500">
                   <Coins className="w-3.5 h-3.5" />
-                  <span className="text-xs font-black">{reward > 0 ? `${currencySymbol}${reward} Prize Pool` : reward === 0 ? "FREE" : "INITIALIZING..."}</span>
+                  <span className="text-xs font-black">{reward > 0 ? `${reward} Credits` : reward === 0 ? "FREE" : "INITIALIZING..."}</span>
                 </div>
                 <div className="w-1 h-1 rounded-full bg-white/20" />
                 <div className="flex items-center gap-1.5 text-blue-400">
@@ -65,7 +65,7 @@ export const BountyPreview = ({ watchAll, tasksCount, reward, currencySymbol }: 
         <div className="p-8 space-y-8 bg-black">
           <div className="space-y-3">
             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Briefing</h4>
-            <p className="text-sm text-white/70 leading-relaxed font-medium line-clamp-10 italic whitespace-pre-wrap break-words">
+            <p className="text-sm text-white/70 leading-relaxed font-medium line-clamp-10 italic whitespace-pre-wrap wrap-break-word">
               {watchAll.description || "The bounty description will illuminate here once provided. Every saga needs a beginning..."}
             </p>
           </div>

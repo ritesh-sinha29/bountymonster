@@ -13,7 +13,7 @@ import type * as characters from "../characters.js";
 import type * as leaderboard from "../leaderboard.js";
 import type * as notifications from "../notifications.js";
 import type * as participants from "../participants.js";
-import type * as subscriptions from "../subscriptions.js";
+import type * as search from "../search.js";
 import type * as users from "../users.js";
 
 import type {
@@ -28,7 +28,7 @@ declare const fullApi: ApiFromModules<{
   leaderboard: typeof leaderboard;
   notifications: typeof notifications;
   participants: typeof participants;
-  subscriptions: typeof subscriptions;
+  search: typeof search;
   users: typeof users;
 }>;
 

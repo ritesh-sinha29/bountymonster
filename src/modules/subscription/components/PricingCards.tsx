@@ -5,7 +5,7 @@ import { Check, Mail, User, Cloud } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@clerk/nextjs";
 
-/** ... skipping plan comments ... */
+
 const plans = [
   {
     name: "Starter Hunter",
@@ -13,7 +13,6 @@ const plans = [
     price: "$10",
     interval: "/month",
     buttonText: "Choose this plan",
-    polarPriceId: "cbbe9eef-e790-4cca-9238-dec6817d9666",
     features: [
       { icon: <User className="w-3.5 h-3.5" />, text: "2 team members" },
       { icon: <Cloud className="w-3.5 h-3.5" />, text: "20 active bounties" },
@@ -36,7 +35,6 @@ const plans = [
     price: "$25",
     interval: "/month",
     buttonText: "Choose this plan",
-    polarPriceId: "dc14db88-2302-4137-9ad2-db1f022f6643", // ← Paste your Polar Price ID here
     buttonClass: "bg-[#fe5b22] hover:bg-[#ff6a38] text-white font-semibold shadow-[0_4px_14px_0_rgba(254,91,34,0.39)]",
     features: [
       { icon: <User className="w-3.5 h-3.5" />, text: "5 team members" },
@@ -58,7 +56,6 @@ const plans = [
     description: "Own your guild network. Custom integrations. Dedicated support.",
     price: "Contact us",
     buttonText: "Contact us",
-    polarPriceId: null as string | null, // Enterprise — keep null (uses mailto link)
     buttonIcon: <Mail className="w-4 h-4 mr-2" />,
     buttonClass: "bg-[#1c1c1e] hover:bg-[#2c2c2e] text-white/90 font-medium border border-white/5",
     features: [
@@ -78,9 +75,8 @@ const plans = [
   },
 ];
 
-export const PricingCards = ({ activePriceId }: { activePriceId?: string }) => {
+export const PricingCards = () => {
   const { user } = useUser();
-  const externalIdParam = user?.id ? `&customerExternalId=${user.id}` : "";
 
   return (
     <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-6 p-6 w-full py-10 relative font-sans perspective-[2000px]">
@@ -90,17 +86,10 @@ export const PricingCards = ({ activePriceId }: { activePriceId?: string }) => {
 
       {plans.map((plan, i) => {
         const isMiddle = i === 1;
-        const isCurrentPlan = activePriceId && plan.polarPriceId === activePriceId;
 
-        // Build the button href:
-        // - If polarPriceId is set → Polar checkout
-        // - If "Contact us" → mailto link
-        // - Otherwise → disabled (price not yet configured)
-        const href = plan.polarPriceId
-          ? `/api/checkout?products=${plan.polarPriceId}${externalIdParam}`
-          : plan.price === "Contact us"
-          ? "mailto:hello@bountymonster.gg"
-          : null;
+        const href = plan.price === "Contact us"
+          ? "mailto:[EMAIL_ADDRESS]"  // change this email to the admin email
+          : "mailto:[EMAIL_ADDRESS]?subject=Pricing Inquiry: " + plan.name;
 
         return (
           <div
@@ -164,37 +153,17 @@ export const PricingCards = ({ activePriceId }: { activePriceId?: string }) => {
               )}
             </div>
 
-            {/* CTA Button — links to Polar checkout or mailto */}
-            {isCurrentPlan ? (
-              <button
-                disabled
-                className="w-full py-3.5 px-4 rounded-xl text-[14px] transition-all flex items-center justify-center mb-10 bg-white/10 text-white font-medium border border-white/20 cursor-default"
-              >
-                Current Plan
-              </button>
-            ) : href ? (
-              <a
-                href={href}
-                className={cn(
-                  "w-full py-3.5 px-4 rounded-xl text-[14px] transition-all flex items-center justify-center mb-10",
-                  plan.buttonClass
-                )}
-              >
-                {"buttonIcon" in plan && plan.buttonIcon}
-                {plan.buttonText}
-              </a>
-            ) : (
-              <button
-                disabled
-                title="Price not yet configured — add your Polar Price ID"
-                className={cn(
-                  "w-full py-3.5 px-4 rounded-xl text-[14px] transition-all flex items-center justify-center mb-10 opacity-60 cursor-not-allowed",
-                  plan.buttonClass
-                )}
-              >
-                {plan.buttonText}
-              </button>
-            )}
+            {/* CTA Button — links to mailto */}
+            <a
+              href={href}
+              className={cn(
+                "w-full py-3.5 px-4 rounded-xl text-[14px] transition-all flex items-center justify-center mb-10",
+                plan.buttonClass
+              )}
+            >
+              {"buttonIcon" in plan && plan.buttonIcon}
+              {plan.buttonText}
+            </a>
 
             {/* Upper Features */}
             <div className="space-y-4 text-[13px]">

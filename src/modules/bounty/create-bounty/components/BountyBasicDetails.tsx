@@ -4,13 +4,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Coins, Trophy } from "lucide-react";
+import { Users, Coins, Trophy, X } from "lucide-react";
+import { UploadDropzone } from "@/lib/uploadthing";
+import { toast } from "sonner";
+import Image from "next/image";
 
 /**
  * Renders the primary details form for creating a new bounty.
  * Captures title, description, category, required level, cover image, and reward configurations.
  */
-export const BountyBasicDetails = ({ form, rewardPerHunter, currencySymbol }: { form: any; rewardPerHunter: number; currencySymbol: string }) => {
+export const BountyBasicDetails = ({ form, rewardPerHunter }: { form: any; rewardPerHunter: number }) => {
   return (
     <>
       <Card className="bg-white/2 border-white/10 backdrop-blur-sm">
@@ -111,48 +114,13 @@ export const BountyBasicDetails = ({ form, rewardPerHunter, currencySymbol }: { 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <FormField
               control={form.control}
-              name="currency"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Currency</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-12 bg-black/20">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="USD">USD ($)</SelectItem>
-                      <SelectItem value="EUR">EUR (€)</SelectItem>
-                      <SelectItem value="GBP">GBP (£)</SelectItem>
-                      <SelectItem value="INR">INR (₹)</SelectItem>
-                      <SelectItem value="AUD">AUD (A$)</SelectItem>
-                      <SelectItem value="CAD">CAD (C$)</SelectItem>
-                      <SelectItem value="JPY">JPY (¥)</SelectItem>
-                      <SelectItem value="CNY">CNY (¥)</SelectItem>
-                      <SelectItem value="CHF">CHF (₣)</SelectItem>
-                      <SelectItem value="SGD">SGD (S$)</SelectItem>
-                      <SelectItem value="NZD">NZD (NZ$)</SelectItem>
-                      <SelectItem value="USDC">USDC</SelectItem>
-                      <SelectItem value="USDT">USDT</SelectItem>
-                      <SelectItem value="ETH">ETH (Ξ)</SelectItem>
-                      <SelectItem value="BTC">BTC (₿)</SelectItem>
-                      <SelectItem value="SOL">SOL</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="reward"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex justify-between items-center">
-                    <span>Total Prize Pool <span className="text-red-500">*</span></span>
-                    <span className="text-xs text-orange-500 font-bold whitespace-nowrap">
-                      {field.value === 0 ? "FREE" : `${currencySymbol}${rewardPerHunter} / hunter`}
+                    <span>Total Bounty Pool <span className="text-red-500">*</span></span>
+                    <span className="text-xs text-orange-500 font-bold whitespace-nowrap uppercase tracking-tighter">
+                      {field.value === 0 ? "FREE" : `${rewardPerHunter} credits / hunter`}
                     </span>
                   </FormLabel>
                   <FormControl>
@@ -165,7 +133,7 @@ export const BountyBasicDetails = ({ form, rewardPerHunter, currencySymbol }: { 
                         onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number.parseFloat(e.target.value))}
                         onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
                         onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                        className="h-12 bg-black/20 pl-11 pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                        className="h-12 bg-black/20 pl-11 pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold" 
                         placeholder="e.g. 500" 
                         step="any"
                       />
@@ -176,7 +144,7 @@ export const BountyBasicDetails = ({ form, rewardPerHunter, currencySymbol }: { 
                             e.preventDefault(); 
                             field.onChange(0); 
                           }} 
-                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/5 hover:bg-white/10 border border-white/20 text-white font-bold text-xs px-4 py-1.5 rounded-md transition-all shadow-md active:scale-95 cursor-pointer"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/5 hover:bg-white/10 border border-white/20 text-white font-bold text-[10px] px-3 py-1.5 rounded-md transition-all shadow-md active:scale-95 cursor-pointer uppercase tracking-widest"
                         >
                           FREE
                         </button>
@@ -217,7 +185,7 @@ export const BountyBasicDetails = ({ form, rewardPerHunter, currencySymbol }: { 
               control={form.control}
               name="xpReward"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Total XP</FormLabel>
                   <FormControl>
                     <div className="relative">
@@ -246,13 +214,51 @@ export const BountyBasicDetails = ({ form, rewardPerHunter, currencySymbol }: { 
             name="coverImage"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cover Image Preview URL</FormLabel>
+                <FormLabel className="flex justify-between items-center text-white/90">
+                  <span>Cover Image</span>
+                  {field.value && (
+                    <button 
+                       type="button" 
+                       onClick={() => field.onChange("")}
+                       className="text-[10px] text-red-400 hover:text-red-300 transition-colors uppercase font-bold tracking-widest flex items-center gap-1 bg-red-400/5 px-2 py-1 rounded"
+                    >
+                      <X className="w-3 h-3"/> Remove
+                    </button>
+                  )}
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter Valid Image URL (Required)" {...field} className="h-12 bg-black/20" />
+                  <div className="relative">
+                    {field.value ? (
+                      <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-white/10 group shadow-2xl">
+                        <Image 
+                          src={field.value} 
+                          alt="Cover preview" 
+                          fill 
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                            <span className="text-white text-[10px] font-bold uppercase tracking-wider bg-black/40 backdrop-blur-md px-2 py-1 rounded border border-white/10">Active Cover Image</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-white/10 rounded-2xl bg-white/2 hover:bg-white/4 transition-all overflow-hidden">
+                        <UploadDropzone
+                          endpoint="bountyImage"
+                          onClientUploadComplete={(res) => {
+                            if (res?.[0]) {
+                              field.onChange(res[0].url);
+                              toast.success("Image uploaded successfully!");
+                            }
+                          }}
+                          onUploadError={(error: Error) => {
+                             toast.error(`Upload failed: ${error.message}`);
+                          }}
+                          className="ut-label:text-primary ut-button:bg-primary ut-button:ut-readying:bg-primary/50 ut-button:text-black ut-button:font-bold border-none h-[220px]"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </FormControl>
-                <FormDescription className="text-xs">
-                   Paste any image URL to see how it looks.
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

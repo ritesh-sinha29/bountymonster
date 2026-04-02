@@ -1,10 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-/**
- * Core database schema definition.
- * Defines collections, structures, indexes, and types for the application.
- */
+
 export default defineSchema({
   users: defineTable({
     clerkToken: v.string(),
@@ -13,9 +10,7 @@ export default defineSchema({
     userAvatar: v.optional(v.string()),
     userType: v.union(
       v.literal("user"),
-      v.literal("organisation"),
       v.literal("admin"),
-      v.literal("default"),
     ),
     planType: v.union(v.literal("free"), v.literal("pro"), v.literal("elite")),
     socialLinks: v.optional(
@@ -27,21 +22,24 @@ export default defineSchema({
       ),
     ),
     phoneNumber: v.optional(v.string()),
-    occupation: v.optional(v.string()),
     onBoarding: v.boolean(),
     streaks: v.optional(v.number()),
+    mainMoto: v.optional(v.string()),
     createdAT: v.number(),
     updatedAT: v.number(),
   }).index("by_token", ["clerkToken"]),
 
+  // --------------------------------------------------
   characters: defineTable({
     userId: v.id("users"),
     characterName: v.string(),
+    characterAvatar: v.optional(v.string()),
     theme: v.string(),
     xp: v.optional(v.number()),
     level: v.optional(v.number()),
   }).index("by_userId", ["userId"]),
 
+  // -----------------------------------------------------
   bounties: defineTable({
     creatorId: v.id("users"),
     name: v.string(),
@@ -49,7 +47,6 @@ export default defineSchema({
     reward: v.number(),
     maxHunters: v.optional(v.number()),
     rewardPerHunter: v.optional(v.number()),
-    currency: v.optional(v.string()),
     type: v.string(), // Extensible typing system (e.g. tech, event)
     coverImage: v.string(),
     xpReward: v.number(),
@@ -131,22 +128,12 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_userId_milestone", ["userId", "milestoneKey"]),
+    
+// -----------------------------------------------------------
 
-  /**
-   * Polar.sh subscription records.
-   * Written by the /api/webhooks/polar route on every subscription event.
-   * clerkId links back to the authenticated user (used as externalId in Polar).
-   */
-  subscriptions: defineTable({
-    clerkId: v.string(),           // Clerk user ID (external reference)
-    polarCustomerId: v.string(),   // Polar customer ID (for portal redirects)
-    polarSubscriptionId: v.string(),
-    productId: v.string(),
-    priceId: v.string(),
-    status: v.string(),            // "active" | "canceled" | "past_due" | etc.
-    currentPeriodEnd: v.number(),  // Unix timestamp (ms)
-  })
-    .index("by_clerkId", ["clerkId"])
-    .index("by_polarCustomerId", ["polarCustomerId"])
-    .index("by_polarSubscriptionId", ["polarSubscriptionId"]),
+  searchHistory: defineTable({
+    userId: v.id("users"),
+    query: v.string(),
+    createdAt: v.number(),
+  }).index("by_userId", ["userId"]),
 });

@@ -1,72 +1,91 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpRight, Flame } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ArrowUpRight, Flame, LucidePlus } from "lucide-react";
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { Button } from "@/components/ui/button";
 
 export const TrendingNow = () => {
-  const trendingBounties = useQuery(api.bounties.getTrendingBounties) || [];
+  const trendingBounties = useQuery(api.bounties.getTrendingBounties);
 
   return (
-    <Card className="flex flex-col flex-1 max-h-[380px] overflow-hidden bg-[#0A0D15] border border-white/[0.02] p-0 gap-0 rounded-[28px] shadow-2xl mb-6 shrink-0">
-      <CardHeader className="px-6 pt-4 pb-4 border-b border-white/[0.04] bg-black rounded-t-[28px]">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-4">
-            <div className="size-[46px] rounded-full bg-[#18110D] border border-orange-500/10 flex items-center justify-center shrink-0">
-              <Flame className="size-4 text-orange-500" strokeWidth={2.5} />
-            </div>
-            <CardTitle className="text-[16px] font-bold text-white tracking-tight leading-[1.2]">
-              Trending Now
-            </CardTitle>
-          </div>
-          <button className="size-[42px] rounded-full border border-white/5 bg-[#12151E] flex items-center justify-center hover:bg-white/[0.05] transition-colors cursor-pointer shrink-0">
-            <ArrowUpRight className="size-[18px] text-white/70" strokeWidth={2} />
-          </button>
+    <div className="flex flex-col flex-1 max-h-[400px] bg-[#05070A] border border-white/10 rounded-xl overflow-hidden mb-6 shadow-sm">
+      <div className="px-4 py-5 flex items-center justify-between border-b border-white/6 bg-black/20">
+        <div className="flex items-center gap-2">
+          <Flame className="size-5 text-orange-500 fill-orange-500/20" />
+          <h3 className="text-base font-semibold text-white/90 tracking-tight">
+            Trending Bounties
+          </h3>
         </div>
-      </CardHeader>
+        <div className="flex items-center gap-2">
+          <Button size="xs" variant={"outline"} className="text-[10px] hover:text-white px-3!">
+            More <LucidePlus className="size-3" />
+          </Button>
+        </div>
+      </div>
 
-      <CardContent className="flex-1 overflow-y-auto px-4 pt-2 pb-4 min-h-0">
-        <div className="space-y-3 pb-2">
-          {trendingBounties.map((b, index) => (
-            <Link
-              href={`/home/bounty/${b._id}`}
-              key={b._id}
-              className="relative flex flex-col w-full rounded-[14px] overflow-hidden border border-white/[0.04] group hover:border-white/10 transition-colors shrink-0 p-3 gap-1.5"
-            >
-              <img
-                src={b.coverImage || "https://images.unsplash.com/photo-1614728263952-84ea256f9679?auto=format&fit=crop&q=80&w=800&h=400"}
-                alt={b.name}
-                className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 group-hover:scale-105 transition-all duration-700"
+      <div className="flex-1 overflow-y-auto p-1.5 scrollbar-hide bg-primary/5">
+        {trendingBounties === undefined ? (
+          <div className="p-3 space-y-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="h-12 w-full bg-white/3 animate-pulse rounded-lg"
               />
-              <div className="absolute inset-0 bg-linear-to-b from-[#0A0D15]/40 via-[#0A0D15]/80 to-[#0A0D15] mix-blend-multiply" />
-
-              <div className="relative z-10 flex justify-between items-start">
-                <Badge
-                  variant="outline"
-                  className="bg-orange-500/5 text-orange-500 border-orange-500/20 text-[9px] font-black uppercase tracking-widest px-1.5 py-0 rounded-[4px]"
-                >
-                  {b.type || "SOCIAL"}
-                </Badge>
-                <span className="text-[14px] font-black italic text-white/40 tracking-[0.05em] group-hover:text-white/60 transition-colors drop-shadow-md leading-none">
-                  #{String(index + 1).padStart(2, "0")}
-                </span>
-              </div>
-
-              <div className="relative z-10 mt-1">
-                <h4 className="text-[16px] font-black italic uppercase text-white tracking-tighter truncate leading-none mb-1 shadow-black/50 drop-shadow-sm">
-                  {b.name}
-                </h4>
-                <p className="text-[11px] text-white/60 italic leading-none truncate">
-                  Earn <span className="text-[#FFB800] font-bold tracking-tight">{b.xpReward} XP</span>
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            ))}
+          </div>
+        ) : trendingBounties.length > 0 ? (
+          <div className="flex flex-col gap-0.5">
+            {trendingBounties.map((b, index) => (
+              <Link
+                href={`/home/bounty/${b._id}`}
+                key={b._id}
+                className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/4 transition-all group border border-transparent hover:border-white/5"
+              >
+                <div className="flex items-center gap-4">
+                  <span className="text-[11px] font-mono text-white/20 tabular-nums w-4">
+                    {(index + 1).toString().padStart(2, "0")}
+                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-[13px] font-medium text-white/90 group-hover:text-white transition-colors truncate max-w-[150px]">
+                      {b.name}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-white/40 uppercase tracking-tight">
+                        {b.type || "SOCIAL"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <div className="flex flex-col items-end">
+                    <span className="text-[11px] font-bold text-orange-500">
+                      +{b.xpReward} XP
+                    </span>
+                    <span className="text-[9px] text-white/30 font-medium">
+                      REWARD
+                    </span>
+                  </div>
+                  <ArrowUpRight className="size-3.5 text-white/10 group-hover:text-white/40 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+            <div className="size-10 rounded-full bg-white/2 border border-white/5 flex items-center justify-center mb-3">
+              <Flame className="size-5 text-white/10" />
+            </div>
+            <p className="text-[13px] text-white/50 font-medium">
+              No trending bounties
+            </p>
+            <p className="text-[11px] text-white/30 mt-1">
+              Check back later for new rewards
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };

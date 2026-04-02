@@ -10,26 +10,9 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { 
   ArrowLeft,
   Crosshair,
@@ -52,7 +35,6 @@ const formSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters").max(700, "Description maximum 700 letters"),
   maxHunters: z.number().min(5, "At least 5 hunters required"),
   reward: z.number().min(0, "Must be positive"),
-  currency: z.string().min(1, "Please select a currency"),
   type: z.string().min(1, "Please select a bounty type"),
   coverImage: z.string().url("Must be a valid cover image URL"),
   xpReward: z.number(),
@@ -79,9 +61,8 @@ const CreateBountyPage = () => {
       description: "",
       maxHunters: undefined,
       reward: undefined,
-      currency: "",
       type: "",
-      coverImage: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&q=80&w=1000",
+      coverImage: "",
       xpReward: undefined,
       requirementLevel: 1,
       tasks: [{ name: "", description: "", url: "", xp: 150 }],
@@ -98,7 +79,7 @@ const CreateBountyPage = () => {
   const tasks = form.watch("tasks");
   const maxHunters = form.watch("maxHunters");
   const reward = form.watch("reward");
-  const currency = form.watch("currency");
+  const type = form.watch("type");
 
   useEffect(() => {
     const totalXP = calculateTotalXP(tasks.length);
@@ -107,16 +88,38 @@ const CreateBountyPage = () => {
     }
   }, [tasks.length, form, xpReward]);
 
-  const getCurrencySymbol = (code: string) => {
-    const symbols: Record<string, string> = {
-      USD: "$", EUR: "€", GBP: "£", INR: "₹", AUD: "A$", CAD: "C$", 
-      JPY: "¥", CNY: "¥", CHF: "₣", SGD: "S$", NZD: "NZ$",
-      ETH: "Ξ", BTC: "₿", USDC: "USDC", USDT: "USDT", SOL: "SOL"
-    };
-    return symbols[code] || code;
-  };
-  const currencySymbol = getCurrencySymbol(currency);
   const rewardPerHunter = Math.floor((reward || 0) / (maxHunters > 0 ? maxHunters : 1));
+
+  const onFormError = (errors: any) => {
+    // Priority 1: Thumbnail check
+    if (errors.coverImage) {
+      toast.error("A high-impact thumbnail is mandatory before launch.", {
+        description: "Please upload an image to continue."
+      });
+      return;
+    }
+    
+    // Priority 2: Tasks check
+    if (errors.tasks) {
+      toast.error("Every mission needs at least one objective.", {
+        description: "Add a task and define what hunters need to do."
+      });
+      return;
+    }
+
+    // Priority 3: Reward / Hunters
+    if (errors.reward || errors.maxHunters) {
+        toast.warning("Check your reward strategy.", {
+            description: "Ensure the pool and hunter count are set correctly."
+        });
+        return;
+    }
+
+    // General fallback for title/description
+    toast.warning("Some intel is missing.", {
+        description: "Please double check the bounty details form."
+    });
+  };
 
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
@@ -134,7 +137,6 @@ const CreateBountyPage = () => {
         reward: values.reward,
         maxHunters: values.maxHunters,
         rewardPerHunter: Math.floor(values.reward / values.maxHunters),
-        currency: values.currency,
         type: values.type,
         coverImage: values.coverImage,
         xpReward: values.xpReward,
@@ -142,10 +144,14 @@ const CreateBountyPage = () => {
         tasks: finalTasks,
       });
 
-      toast.success("Bounty launched successfully!");
+      toast.success("Bounty launched successfully!", {
+        description: "Your mission is now live for all hunters."
+      });
       router.push("/home/bounty");
     } catch (error) {
-      toast.error("Failed to create bounty.");
+      toast.error("Forge failed: Failed to transmit bounty data.", {
+        description: "Please check your terminal connection and try again."
+      });
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -176,8 +182,8 @@ const CreateBountyPage = () => {
           {/* Form Column */}
           <div className="lg:col-span-7 space-y-8">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <BountyBasicDetails form={form} rewardPerHunter={rewardPerHunter} currencySymbol={currencySymbol} />
+              <form onSubmit={form.handleSubmit(onSubmit, onFormError)} className="space-y-6">
+                <BountyBasicDetails form={form} rewardPerHunter={rewardPerHunter} />
                 <BountyTaskFields form={form} fields={fields} append={append} remove={remove} currentTaskXP={currentTaskXP} />
 
                 <Button 
@@ -192,7 +198,7 @@ const CreateBountyPage = () => {
           </div>
 
           <div className="lg:col-span-5 relative">
-            <BountyPreview watchAll={watchAll} tasksCount={tasks.length} reward={reward} currencySymbol={currencySymbol} />
+            <BountyPreview watchAll={watchAll} tasksCount={tasks.length} reward={reward} />
           </div>
         </div>
       </div>

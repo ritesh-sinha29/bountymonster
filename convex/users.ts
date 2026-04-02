@@ -1,10 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
-/**
- * Creates a new user record in the database if one does not already exist.
- * Integrates with Clerk authentication.
- */
+
 export const createNewUser = mutation({
   args: {},
   handler: async (ctx) => {
@@ -26,8 +23,9 @@ export const createNewUser = mutation({
     return await ctx.db.insert("users", {
       name: identity.name || "",
       clerkToken: identity.tokenIdentifier,
+      userAvatar: identity.pictureUrl || "",
       email: identity.email || "",
-      userType: "default",
+      userType: "user",
       planType: "free",
       onBoarding: false,
       createdAT: Date.now(),
@@ -60,12 +58,10 @@ export const getCurrentUser = query({
   },
 });
 
-/**
- * Updates the user's account type during the first step of onboarding.
- */
+
 export const updateOnboardingStep1 = mutation({
   args: {
-    userType: v.union(v.literal("user"), v.literal("organisation")),
+    mainMoto: v.string(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -80,21 +76,17 @@ export const updateOnboardingStep1 = mutation({
     if (!user) throw new Error("User not found");
 
     await ctx.db.patch(user._id, {
-      userType: args.userType,
+      mainMoto: args.mainMoto,
       updatedAT: Date.now(),
     });
   },
 });
 
-/**
- * Updates the user's account details during the second step of onboarding.
- * Captures name, contact information, occupation, and social links.
- */
+
 export const updateOnboardingStep2 = mutation({
   args: {
     name: v.string(), 
     phoneNumber: v.string(),
-    occupation: v.string(),
     socialLinks: v.optional(
       v.array(v.object({ platform: v.string(), url: v.string() })),
     ),
@@ -114,22 +106,18 @@ export const updateOnboardingStep2 = mutation({
     await ctx.db.patch(user._id, {
       name: args.name,
       phoneNumber: args.phoneNumber,
-      occupation: args.occupation,
       socialLinks: args.socialLinks,
       updatedAT: Date.now(),
     });
   },
 });
 
-/**
- * Finalizes the onboarding process for the user.
- * Creates their base character profile and marks the onboarding step as complete.
- */
+
 export const completeOnboarding = mutation({
   args: {
     characterName: v.string(),
     theme: v.string(),
-    userAvatar: v.string(), 
+    characterAvatar: v.string(), 
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -146,6 +134,7 @@ export const completeOnboarding = mutation({
     await ctx.db.insert("characters", {
       userId: user._id,
       characterName: args.characterName,
+      characterAvatar: args.characterAvatar,
       theme: args.theme,
       xp: 0,
       level: 1,
@@ -153,7 +142,6 @@ export const completeOnboarding = mutation({
 
     await ctx.db.patch(user._id, {
       onBoarding: true,
-      userAvatar: args.userAvatar,
       updatedAT: Date.now(),
     });
   },

@@ -45,7 +45,7 @@ export const CharacterCard = ({ character, onSelect, selected }: CharacterCardPr
   };
 
   return (
-    <div className={`relative group w-[240px] h-[400px] perspective-1000 mx-auto font-inter transition-all duration-300`}>
+    <div className={`relative group w-[240px] h-[360px] perspective-1000 mx-auto font-inter transition-all duration-300`}>
       {/* Selection Border */}
       <div
         className={`absolute -inset-[2px] rounded-xl transition-all duration-300 z-0 ${

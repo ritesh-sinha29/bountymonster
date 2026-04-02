@@ -27,10 +27,14 @@ import {
   Zap,
   Crosshair,
   ChevronRight,
+  ExternalLink,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 
 const NAV_MAIN = [
   { label: "Home", href: "/home", icon: Home },
@@ -42,6 +46,7 @@ const NAV_MAIN = [
 
 const NAV_FOOTER = [
   { label: "Profile", href: "/home/profile", icon: UserCircle },
+   { label: "Favorites", href: "/home/favorites", icon: Star },
 ];
 
 const ALL_ROUTES = [
@@ -54,11 +59,6 @@ const ALL_ROUTES = [
   "/home/bounty/create-bounty",
 ];
 
-/**
- * Primary application sidebar for navigation and user context.
- * Prefetches primary routes for instant transitions and displays synchronized
- * realtime character and user progress details.
- */
 export const AppSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
@@ -81,13 +81,19 @@ export const AppSidebar = () => {
 
   const characterData = useQuery(api.characters.getCurrentCharacter);
 
-  const characterObj = Characters.find((c) => c.name === characterData?.characterName);
+  const characterObj = Characters.find(
+    (c) => c.name === characterData?.characterName,
+  );
   const characterImage = characterObj?.image || Characters[0].image;
   const characterName = characterData?.characterName || "Anonymous";
   const currentXp = characterData?.xp ?? 0;
-  const { level: currentLevel, xpIntoLevel, xpForNextLevel, percent: xpPercent } = getXpProgress(currentXp);
+  const {
+    level: currentLevel,
+    xpIntoLevel,
+    xpForNextLevel,
+    percent: xpPercent,
+  } = getXpProgress(currentXp);
 
-  // Avoid hydration mismatch on visual client elements
   if (!mounted) return null;
 
   return (
@@ -95,7 +101,6 @@ export const AppSidebar = () => {
       collapsible="icon"
       className="border-r border-white/10 bg-[#05070B]"
     >
-      {/* ── HEADER: Logo + Brand ── */}
       <SidebarHeader className="h-[64px] min-h-[64px] flex items-center justify-center border-b border-white/10 shrink-0 px-2 group-data-[collapsible=icon]:px-0">
         <Link
           href="/home"
@@ -104,68 +109,59 @@ export const AppSidebar = () => {
           <Image
             src="/logo.svg"
             alt="BountyMonster Logo"
-            width={28}
-            height={28}
+            width={35}
+            height={35}
             className="shrink-0 group-data-[collapsible=icon]:scale-90 transition-transform"
           />
-          <span className="text-sidebar-foreground font-semibold text-[18px] tracking-tight group-data-[collapsible=icon]:hidden">
+          <span className="text-sidebar-foreground font-pop font-semibold text-xl tracking-tight group-data-[collapsible=icon]:hidden">
             Bounty Monster
           </span>
         </Link>
       </SidebarHeader>
 
       {/* ── CHARACTER CARD ── */}
-      <div className="px-3 py-4 group-data-[collapsible=icon]:hidden">
-        <div className="relative group rounded-2xl overflow-hidden bg-gradient-to-b from-white/5 to-black/20 border border-white/10 p-3.5 flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all duration-500 hover:border-primary/50 hover:bg-white/5 hover:shadow-[0_0_30px_rgba(var(--color-primary),0.15)] cursor-default">
-          
-          {/* Ambient Glow Effects */}
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-primary/20 via-primary/5 to-transparent pointer-events-none opacity-60 transition-opacity duration-500 group-hover:opacity-100" />
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 blur-[40px] rounded-full pointer-events-none transition-transform duration-700 group-hover:scale-150" />
+      <div className="mx-3 my-2 group-data-[collapsible=icon]:hidden">
+        <div className="relative overflow-hidden p-4 rounded-xl bg-white/5 border border-white/10 transition-all hover:bg-white/10">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="relative shrink-0">
+              <Avatar className="w-14 h-14">
+                <AvatarImage src={user?.userAvatar} />
+                <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+              </Avatar>
+            </div>
+            <div className="flex-1 flex items-start justify-between  min-w-0">
+              <div className="flex flex-col gap-1">
+                <p className="text-xl font-bold text-white truncate max-w-[120px]">
+                  {user?.name}
+                </p>
+                <span className="shrink-0 text-[10px] font-mono font-bold text-white px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20">
+                  LVL {currentLevel}
+                </span>
+              </div>
 
-          {/* Character Image */}
-          <div className="relative shrink-0 w-20 h-20 flex items-center justify-center">
-            <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full scale-50 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-500 ease-out" />
-            <Image
-              src={characterImage}
-              alt={characterName}
-              width={100}
-              height={100}
-              className="object-contain w-[125%] h-[125%] drop-shadow-[0_15px_25px_rgba(0,0,0,0.6)] z-10 transition-transform duration-500 ease-out group-hover:scale-110 group-hover:-translate-y-1 relative"
-            />
+              <Button
+                size={"icon-xs"}
+                variant={"outline"}
+                className="rounded hover:text-white hover:bg-primary cursor-pointer"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
-          {/* Info Section */}
-          <div className="flex-1 min-w-0 z-10 py-1 flex flex-col justify-center">
-            
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="px-1.5 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(var(--color-primary),0.1)] transition-colors">
-                Lv. {currentLevel}
+          {/* Bottom section: XP Progress Bar */}
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-end text-[10px] font-bold uppercase tracking-tight">
+              <span className="text-white/70">Experience</span>
+              <span className="text-white/60">
+                {xpIntoLevel} / {xpForNextLevel}
               </span>
             </div>
-            
-            <p className="text-white font-semibold text-[13px] truncate leading-tight mt-1 mb-2 tracking-tight drop-shadow-md">
-              {user?.name || characterName}
-            </p>
-
-            {/* Premium XP bar */}
-            <div className="mt-auto">
-              <div className="flex justify-between items-baseline mb-1.5">
-                <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest drop-shadow-sm">
-                  XP
-                </span>
-                <span className="text-[9px] text-white/50 font-bold tracking-wide drop-shadow-sm">
-                  <span className="text-white/90">{xpIntoLevel.toLocaleString()}</span>{" "}
-                  <span className="text-white/30">/</span> {xpForNextLevel.toLocaleString()}
-                </span>
-              </div>
-              <div className="h-1.5 w-full rounded-full bg-black border border-white/10 overflow-hidden shadow-inner relative">
-                <div
-                  className="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-primary/50 to-primary transition-all duration-1000 ease-out shadow-[0_0_12px_rgba(var(--color-primary),0.8)]"
-                  style={{ width: `${xpPercent}%` }}
-                >
-                  <div className="absolute top-0 inset-x-0 h-[1px] bg-white/40 mix-blend-overlay" />
-                </div>
-              </div>
+            <div className="h-1.5 w-full rounded-full bg-white/5 border border-white/5 overflow-hidden">
+              <div
+                className="h-full bg-linear-to-r from-primary/60 to-primary transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(var(--color-primary),0.3)]"
+                style={{ width: `${xpPercent}%` }}
+              />
             </div>
           </div>
         </div>
@@ -182,39 +178,52 @@ export const AppSidebar = () => {
                   asChild
                   tooltip={label}
                   isActive={active}
-                  className={`relative flex items-center rounded-xl p-1.5 text-sm font-medium transition-all duration-200 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto overflow-visible ${
+                  className={`relative flex items-center rounded-md py-1 text-sm font-medium! transition-all duration-200 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto overflow-visible ${
                     active
-                      ? "text-white !bg-transparent"
-                      : "text-white/50 hover:text-white hover:bg-white/5"
+                      ? "text-white bg-primary/20!"
+                      : "text-white/80 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  <Link href={href} prefetch={true} className="w-full flex items-center h-full">
+                  <Link
+                    href={href}
+                    prefetch={true}
+                    className="w-full flex items-center h-full"
+                  >
                     {active && (
-                      <>
-                        <div className="absolute -left-[10px] top-1/2 -translate-y-1/2 w-1.5 h-[50%] bg-primary rounded-r-full shadow-[0_0_15px_rgba(var(--color-primary),0.8)] group-data-[collapsible=icon]:hidden" />
-                      </>
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-md group-data-[collapsible=icon]:hidden" />
                     )}
-                    
+
                     <div className="relative flex items-center justify-center p-1.5 rounded-lg shrink-0 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:mx-auto bg-transparent">
                       <Icon
                         className={`size-[18px] shrink-0 transition-colors ${
-                          active ? "text-primary drop-shadow-[0_0_8px_rgba(var(--color-primary),0.5)]" : "text-sidebar-foreground/50"
+                          active
+                            ? "text-white drop-shadow-[0_0_8px_rgba(var(--color-primary),0.5)]"
+                            : "text-sidebar-foreground/80"
                         }`}
                       />
                     </div>
-                    
-                    <span className={`ml-3 z-10 group-data-[collapsible=icon]:hidden ${active ? "text-white/90 font-bold tracking-wide" : ""}`}>{label}</span>
+
+                    <span
+                      className={`ml-2 z-10 group-data-[collapsible=icon]:hidden ${active ? "text-white/90 font-bold tracking-wide" : ""}`}
+                    >
+                      {label}
+                    </span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             );
           })}
         </SidebarMenu>
-      </SidebarContent>
 
-      {/* ── FOOTER NAV ── */}
-      <SidebarFooter className="px-2 py-3 border-t border-white/20 gap-0.5">
-        <SidebarMenu className="gap-0.5">
+        <div className="my-1 flex items-center gap-2 overflow-hidden">
+          <Separator className="bg-neutral-800 max-w-20" />
+          <span className="text-neutral-400 text-sm font-medium whitespace-nowrap">
+            Quick Links
+          </span>
+          <Separator className="bg-neutral-800 max-w-20" />
+        </div>
+
+        <SidebarMenu className="">
           {NAV_FOOTER.map(({ label, href, icon: Icon }) => {
             const active = isActive(href);
             return (
@@ -223,28 +232,36 @@ export const AppSidebar = () => {
                   asChild
                   tooltip={label}
                   isActive={active}
-                  className={`relative flex items-center rounded-xl p-1.5 text-sm font-medium transition-all duration-200 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto overflow-visible ${
+                  className={`relative flex items-center rounded-xl p-1 text-sm font-medium transition-all duration-200 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto overflow-visible ${
                     active
                       ? "text-white !bg-transparent"
-                      : "text-white/50 hover:text-white hover:bg-white/5"
+                      : "text-white/80 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  <Link href={href} prefetch={true} className="w-full flex items-center h-full">
+                  <Link
+                    href={href}
+                    prefetch={true}
+                    className="w-full flex items-center h-full"
+                  >
                     {active && (
-                      <>
-                        <div className="absolute -left-[10px] top-1/2 -translate-y-1/2 w-1.5 h-[50%] bg-primary rounded-r-full shadow-[0_0_15px_rgba(var(--color-primary),0.8)] group-data-[collapsible=icon]:hidden" />
-                      </>
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl group-data-[collapsible=icon]:hidden" />
                     )}
-                    
+
                     <div className="relative flex items-center justify-center p-1.5 rounded-lg shrink-0 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:mx-auto bg-transparent">
                       <Icon
                         className={`size-[18px] shrink-0 transition-colors ${
-                          active ? "text-primary drop-shadow-[0_0_8px_rgba(var(--color-primary),0.5)]" : "text-sidebar-foreground/50"
+                          active
+                            ? "text-primary drop-shadow-[0_0_8px_rgba(var(--color-primary),0.5)]"
+                            : "text-sidebar-foreground/80"
                         }`}
                       />
                     </div>
-                    
-                    <span className={`ml-3 z-10 group-data-[collapsible=icon]:hidden ${active ? "text-white/90 font-bold tracking-wide" : ""}`}>{label}</span>
+
+                    <span
+                      className={`ml-3 z-10 group-data-[collapsible=icon]:hidden ${active ? "text-white/90 font-bold tracking-wide" : ""}`}
+                    >
+                      {label}
+                    </span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -252,43 +269,48 @@ export const AppSidebar = () => {
           })}
         </SidebarMenu>
 
-        <div className="flex flex-col gap-2 mt-2 px-1 group-data-[collapsible=icon]:px-0">
-          <Link href="/home/bounty/create-bounty" prefetch={true}>
-            <Button
-              variant="secondary"
-              className="w-full justify-start gap-2 bg-primary/20 text-white border border-primary/30 hover:bg-primary/30 cursor-pointer font-bold text-xs h-10 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto overflow-hidden transition-all"
-            >
-              <span className="group-data-[collapsible=icon]:hidden whitespace-nowrap ml-1">
-                CREATE BOUNTY
-              </span>{" "}
-              <Crosshair className="size-4 shrink-0 group-data-[collapsible=icon]:mx-auto ml-auto mr-1" />
-            </Button>
-          </Link>
-        </div>
+        <Link href="/home/bounty/create-bounty" prefetch={true} className="mt-auto">
+          <Button
+            variant="outline"
+            className="w-full justify-between items-center px-3 h-9 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto"
+          >
+            <span className="group-data-[collapsible=icon]:hidden">
+              Create Bounty
+            </span>
 
+            <Crosshair className="size-4 shrink-0 opacity-70 group-data-[collapsible=icon]:mx-auto" />
+          </Button>
+        </Link>
+      </SidebarContent>
+
+      {/* ── FOOTER NAV ── */}
+      <SidebarFooter className="px-2 py-3 border-t border-white/20 gap-0.5">
         <div className="mt-2 group-data-[collapsible=icon]:hidden">
           <Link
             href="/subscription"
             className="
               relative flex flex-col w-full rounded-lg p-3.5 overflow-hidden
-              bg-white/5 border border-white/10 
+              bg-linear-to-br from-white/10 to-primary/10 
             "
           >
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/40 via-transparent to-transparent pointer-events-none" />
             <div className="relative flex items-center justify-between mb-3 z-10">
               <div className="flex items-center justify-center size-8 rounded-lg bg-white/10 text-primary">
                 <Zap className="size-4 fill-current" />
               </div>
               <span className="text-[9px] font-bold uppercase tracking-widest bg-primary/20 text-primary rounded px-2 py-0.5 flex items-center gap-1">
-                PRO
+                {user?.planType?.toUpperCase() || "FREE"}
               </span>
             </div>
             <div className="relative z-10">
               <p className="text-sm font-semibold text-foreground">
-                Upgrade to Pro
+                {user?.planType === "free" || !user?.planType
+                  ? "Upgrade to Pro"
+                  : "Member Status"}
               </p>
               <p className="text-[11px] text-muted-foreground mt-0.5">
-                Unlock all features
+                {user?.planType === "free" || !user?.planType
+                  ? "Upgrade to pro now"
+                  : "Current: " + user?.planType}
               </p>
             </div>
           </Link>

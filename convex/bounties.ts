@@ -150,7 +150,7 @@ export async function enrichBountyDoc(ctx: any, bounty: any, user: any) {
     userStatus,
     isCreator: user ? bounty.creatorId === user._id : false,
     creatorName: creator?.name || "Anonymous",
-    isBoosted: bounty.isBoosted && (bounty.boostEndsAt ?? 0) > Date.now(),
+    isBoosted: bounty.isBoosted && (bounty.boostStartedAt ?? 0) <= Date.now() && (bounty.boostEndsAt ?? 0) > Date.now(),
     boostEndsAt: bounty.boostEndsAt,
   };
 }
@@ -311,6 +311,7 @@ export const getBoostedBounties = query({
       .filter((q) => 
         q.and(
           q.eq(q.field("isBoosted"), true),
+          q.lte(q.field("boostStartedAt"), Date.now()),
           q.gt(q.field("boostEndsAt"), Date.now())
         )
       )

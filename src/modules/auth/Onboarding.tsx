@@ -497,6 +497,7 @@ const Onboarding = () => {
                               <CharacterCard
                                 character={char}
                                 selected={selectedCharacterId === char.id}
+                                isLocked={false}
                                 onSelect={() => {
                                   setSelectedCharacterId(char.id);
                                   applyCharacterTheme(

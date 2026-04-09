@@ -32,6 +32,7 @@ interface CharacterSelectCardProps {
   isActive: boolean;
   isSelected: boolean;
   onSelect: () => void;
+  isLocked?: boolean;
 }
 
 const CornerOrnaments = ({ type, color }: { type: string, color: string }) => {
@@ -89,10 +90,11 @@ export function CharacterSelectCard({
   isActive,
   isSelected,
   onSelect,
+  isLocked
 }: CharacterSelectCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const theme = (themeColors as any)[character.theme] || themeColors.blue;
-  const locked = character.type === "locked";
+  const locked = isLocked !== undefined ? isLocked : character.type === "locked";
 
   const borderColor = theme.borderColorHex || "#ffffff";
   const bgPattern = theme.bgPattern || "none";
@@ -176,7 +178,7 @@ export function CharacterSelectCard({
             <div className="absolute inset-0 z-[60] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/30 backdrop-blur-sm pointer-events-none rounded-[14px]">
                <div className="bg-black/90 text-neutral-100 text-[9px] font-black uppercase tracking-[0.1em] px-4 py-3 rounded-lg border border-red-500/30 shadow-2xl text-center w-[85%] transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
                  <Lock className="w-4 h-4 mx-auto mb-1.5 text-red-400" />
-                 Unlocks at <br/> higher levels
+                 Unlocks with <br/> Pro Plan
                </div>
             </div>
           )}

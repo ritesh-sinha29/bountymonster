@@ -12,12 +12,30 @@ import { motion } from "framer-motion";
 
 
 export function CharacterSelector() {
+  const currentUser = useQuery(api.users.getCurrentUser);
   const currentCharacter = useQuery(api.characters.getCurrentCharacter);
   const changeCharacter = useMutation(api.characters.changeCharacter);
   const [changing, setChanging] = useState<number | null>(null);
 
+  if (currentUser === undefined || currentCharacter === undefined) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-black">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const isPro = currentUser?.planType === "pro" || currentUser?.planType === "elite";
+
   const handleSelect = async (char: (typeof Characters)[0]) => {
-    if (char.type === "locked") return;
+    // Determine if this character is locked for the current user
+    const isLocked = !isPro && char.name !== currentCharacter?.characterName;
+    
+    if (isLocked) {
+      toast.error("Upgrade to Pro to unlock all characters!");
+      return;
+    }
+    
     if (char.name === currentCharacter?.characterName) return;
 
     setChanging(char.id);
@@ -80,7 +98,9 @@ export function CharacterSelector() {
            transition={{ delay: 0.2 }}
            className="text-[10px] md:text-xs text-neutral-400 mt-2 tracking-wider uppercase drop-shadow-md max-w-md mx-auto"
         >
-          Switch your character anytime. Locked characters unlock at higher levels.
+          {isPro 
+            ? "Switch between any character anytime. All characters are unlocked with your Pro plan." 
+            : "Upgrade to Pro to unlock all characters and switch between them anytime."}
         </motion.p>
       </div>
 
@@ -89,27 +109,32 @@ export function CharacterSelector() {
         {/* Transparent edge gradients removed since we shouldn't scroll anymore */}
         
         <div className="flex flex-nowrap items-center justify-center gap-2 md:gap-6 px-1 lg:px-4 shrink-0">
-          {Characters.map((char, idx) => (
-            <motion.div
-              key={char.id}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 + idx * 0.07 }}
-              className="relative shrink-0 snap-center"
-            >
-              {changing === char.id && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center rounded-[14px] bg-black/60 backdrop-blur-md border border-primary/50">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                </div>
-              )}
-              <CharacterSelectCard
-                character={char}
-                isActive={currentCharacter?.characterName === char.name}
-                isSelected={false}
-                onSelect={() => handleSelect(char)}
-              />
-            </motion.div>
-          ))}
+          {Characters.map((char, idx) => {
+            const isCharLocked = !isPro && char.name !== currentCharacter?.characterName;
+            
+            return (
+              <motion.div
+                key={char.id}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 + idx * 0.07 }}
+                className="relative shrink-0 snap-center"
+              >
+                {changing === char.id && (
+                  <div className="absolute inset-0 z-50 flex items-center justify-center rounded-[14px] bg-black/60 backdrop-blur-md border border-primary/50">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                )}
+                <CharacterSelectCard
+                  character={char}
+                  isActive={currentCharacter?.characterName === char.name}
+                  isLocked={isCharLocked}
+                  isSelected={false}
+                  onSelect={() => handleSelect(char)}
+                />
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </div>

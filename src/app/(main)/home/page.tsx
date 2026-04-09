@@ -36,7 +36,7 @@ const HomePage = () => {
   const { results: bounties } = useConvexPaginatedQuery(
     api.bounties.getBountiesPaginated,
     {},
-    { initialNumItems: 3 }
+    { initialNumItems: 6 }
   );
 
   const getBountyIcon = (type: string) => {
@@ -93,7 +93,7 @@ const HomePage = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <ExploreBounties bounties={bounties} currentUser={user} />
+              <ExploreBounties bounties={bounties} currentUser={user} limit={3} />
             </div>
           </section>
         </div>

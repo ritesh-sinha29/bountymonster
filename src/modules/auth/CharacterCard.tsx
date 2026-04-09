@@ -3,10 +3,7 @@
 import React, { useState } from "react";
 import {
   Star,
-  RefreshCw,
-  ArrowRight,
   BarChart3,
-  X,
   Zap,
   ShieldCheck,
   Undo2,
@@ -33,11 +30,13 @@ interface CharacterCardProps {
   character: Character;
   onSelect?: () => void;
   selected?: boolean;
+  isLocked?: boolean;
 }
 
-export const CharacterCard = ({ character, onSelect, selected }: CharacterCardProps) => {
+export const CharacterCard = ({ character, onSelect, selected, isLocked }: CharacterCardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const theme = themeColors[character?.theme as keyof typeof themeColors] || themeColors.blue;
+  const locked = isLocked !== undefined ? isLocked : character.type === "locked";
 
   const toggleFlip = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -91,14 +90,14 @@ export const CharacterCard = ({ character, onSelect, selected }: CharacterCardPr
             {/* Action Buttons Overlay (shown on hover or when selected) */}
             <div className="absolute inset-0 flex flex-col justify-end p-4 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-y-2">
               <button
-                onClick={(e) => character.type !== "locked" && onSelect?.()}
+                onClick={(e) => !locked && onSelect?.()}
                 className={`w-full py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                  character.type === "locked"
+                  locked
                     ? "bg-neutral-800 text-neutral-500 cursor-not-allowed"
                     : ` ${theme.bg} text-white hover:opacity-90 ${theme.shadow}`
                 }`}
               >
-                {character.type === "locked" ? "Locked" : "Select"}
+                {locked ? "Locked" : "Select"}
               </button>
               
               <button
@@ -118,10 +117,9 @@ export const CharacterCard = ({ character, onSelect, selected }: CharacterCardPr
               <div className="h-0.5 w-8 bg-primary mx-auto mt-1 opacity-60" />
             </div>
             
-            {/* Top Right Rank/Lock Icon */}
             <div className="absolute top-3 right-3 z-30">
-               <div className={`p-1.5 rounded-lg backdrop-blur-md border border-white/10 ${character.type === "locked" ? "bg-red-500/20 text-red-400" : "bg-primary/20 text-primary"}`}>
-                {character.type === "locked" ? <Lock className="w-3 h-3" /> : <Star className="w-3 h-3 fill-primary" />}
+               <div className={`p-1.5 rounded-lg backdrop-blur-md border border-white/10 ${locked ? "bg-red-500/20 text-red-400" : "bg-primary/20 text-primary"}`}>
+                {locked ? <Lock className="w-3 h-3" /> : <Star className="w-3 h-3 fill-primary" />}
                </div>
             </div>
           </div>

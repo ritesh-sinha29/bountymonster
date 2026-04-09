@@ -120,3 +120,41 @@ export const clearAllHistory = mutation({
     }
   },
 });
+import { enrichBountyDoc } from "./bounties";
+
+/**
+ * Search for bounties based on a text query.
+ * Matches against name, description, and type.
+ * Enriches results with participant counts and user-specific status.
+ */
+export const searchBounties = query({
+  args: { queryText: v.string() },
+  handler: async (ctx, args) => {
+    const searchLower = args.queryText.trim().toLowerCase();
+    if (!searchLower) return [];
+
+    // Fetch the current user for enrichment if authenticated
+    const identity = await ctx.auth.getUserIdentity();
+    const user = identity 
+      ? await ctx.db
+          .query("users")
+          .withIndex("by_token", (q) => q.eq("clerkToken", identity.tokenIdentifier))
+          .unique()
+      : null;
+
+    const bounties = await ctx.db.query("bounties").collect();
+    
+    const results = bounties.filter((b) => 
+      b.name.toLowerCase().includes(searchLower) ||
+      b.description.toLowerCase().includes(searchLower) ||
+      b.type.toLowerCase().includes(searchLower)
+    );
+
+    // Limit, enrich and return
+    const limitedResults = results.slice(0, 24);
+    
+    return await Promise.all(
+      limitedResults.map((b) => enrichBountyDoc(ctx, b, user))
+    );
+  },
+});

@@ -28,6 +28,8 @@ export const createNewUser = mutation({
       userType: "user",
       planType: "free",
       onBoarding: false,
+      xp: 0,
+      level: 1,
       createdAT: Date.now(),
       updatedAT: Date.now(),
     });
@@ -136,8 +138,6 @@ export const completeOnboarding = mutation({
       characterName: args.characterName,
       characterAvatar: args.characterAvatar,
       theme: args.theme,
-      xp: 0,
-      level: 1,
     });
 
     await ctx.db.patch(user._id, {

@@ -7,13 +7,7 @@ import { BountyCard } from "./bountyCard";
 export const TrendingBounties = ({ bounties, currentUser }: { bounties: any[], currentUser: any }) => {
   const trending = [...bounties]
     .filter(b => b.creatorId !== currentUser?._id)
-    .sort((a, b) => {
-      const viewsA = a.views || 0;
-      const viewsB = b.views || 0;
-      if (viewsB !== viewsA) return viewsB - viewsA;
-
-      return (b.xpReward * (b.maxHunters || 1)) - (a.xpReward * (a.maxHunters || 1));
-    });
+    .sort((a, b) => (b.participantCount || 0) - (a.participantCount || 0));
 
   if (trending.length === 0) {
     return <div className="col-span-full py-20 text-center text-muted-foreground/50">No trending bounties right now.</div>;

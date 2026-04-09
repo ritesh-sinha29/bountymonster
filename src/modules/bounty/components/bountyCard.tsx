@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { Crosshair, ShieldCheck, CheckCircle2, Gem, Zap, Users2, Trophy, BarChart3 } from "lucide-react";
+import { useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import { toast } from "sonner";
+import { useState } from "react";
+import { Id } from "../../../../convex/_generated/dataModel";
 
-/**
- * Interface mapping the expected shape of fully hydrated bounty data
- * returned from the Convex backend or constructed in the Page components.
- */
+
 export interface ConnectedBounty {
   _id: string;
   name: string;
@@ -21,81 +24,221 @@ export interface ConnectedBounty {
   tasks: any[];
   rewardPerHunter?: number;
   currency?: string;
+  participantCount?: number;
+  isJoined?: boolean;
+  isCompleted?: boolean;
+  userStatus?: string | null;
+  isCreator?: boolean;
+  isBoosted?: boolean;
 }
 
-/**
- * Props expected by the BountyCard visual component.
- */
+
 interface BountyCardProps {
   bounty: ConnectedBounty;
   index: number;
+  currentUser?: any;
 }
 
-/**
- * A highly interactive, dark-themed card component displaying key bounty details.
- * Implements hover reveal for images, framer-motion scaling, and precise layout grids.
- */
-export const BountyCard = ({ bounty, index }: BountyCardProps) => {
+export const BountyCard = ({ bounty, index, currentUser }: BountyCardProps) => {
   const router = useRouter();
-  const currencySymbol = bounty.currency === "INR" ? "₹" : bounty.currency === "EUR" ? "€" : bounty.currency === "GBP" ? "£" : "$";
-  const rewardDisplay = bounty.rewardPerHunter !== undefined ? bounty.rewardPerHunter : bounty.reward;
+  
+  const joinBounty = useMutation(api.participants.joinBounty);
+  const [isJoining, setIsJoining] = useState(false);
+
+  const handleJoin = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const isIneligible = (currentUser?.level ?? 1) < (bounty.requirementLevel ?? 1);
+    
+    if (bounty.isJoined || bounty.isCreator || isIneligible) return;
+
+    setIsJoining(true);
+    try {
+      await joinBounty({ bountyId: bounty._id as Id<"bounties"> });
+      toast.success(`🎯 Successfully joined ${bounty.name}!`);
+    } catch (err: any) {
+      toast.error(err.message ?? "Could not join bounty.");
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
+  const getButtonConfig = () => {
+    if (bounty.isCreator) {
+      return {
+        label: "Your Bounty",
+        icon: <ShieldCheck className="w-3 h-3" />,
+        disabled: true,
+        className: "bg-white/5 text-white/20 border border-white/5 cursor-default"
+      };
+    }
+    if (bounty.isCompleted) {
+      return {
+        label: "Completed",
+        icon: <Trophy className="w-3 h-3" />,
+        disabled: true,
+        className: "bg-green-500/20 text-green-500 border border-green-500/30 cursor-default shadow-[0_0_15px_rgba(34,197,94,0.15)]"
+      };
+    }
+    if (bounty.isJoined) {
+      return {
+        label: "Joined",
+        icon: <CheckCircle2 className="w-3 h-3" />,
+        disabled: true,
+        className: "border bg-primary cursor-default shadow-[0_0_10px_rgba(34,197,94,0.1)]"
+      };
+    }
+
+    const isIneligible = (currentUser?.level ?? 1) < (bounty.requirementLevel ?? 1);
+    if (isIneligible) {
+      return {
+        label: `Not Eligible ${bounty.requirementLevel} REQ`,
+        icon: <ShieldCheck className="w-3 h-3" />,
+        disabled: true,
+        className: "bg-red-500/10 text-red-500 border border-red-500/20 cursor-default"
+      };
+    }
+
+    return {
+      label: "Join Bounty",
+      icon: <Crosshair className="w-3 h-3" />,
+      disabled: false,
+      className: "bg-primary text-primary-foreground hover:brightness-110 active:scale-[0.98] shadow-[0_0_12px_rgba(var(--color-primary),0.2)] cursor-pointer"
+    };
+  };
+
+  const btn = getButtonConfig();
+
+  const handleCardClick = () => {
+    router.push(`/home/bounty/${bounty._id}`);
+  };
 
   return (
-    <Link href={`/home/bounty/${bounty._id}`} className="block cursor-pointer" prefetch={true}>
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: index * 0.05 }}
-        whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-        onHoverStart={() => router.prefetch(`/home/bounty/${bounty._id}`)}
-        className={`group relative rounded-xl border border-white/5 bg-[#05070B] overflow-hidden w-full h-[130px] sm:h-[140px] cursor-pointer shadow-lg`}
-      >
-        <div className="absolute inset-0 pointer-events-none z-0">
-          <div className="absolute top-0 right-0 w-[50%] h-full opacity-40 group-hover:opacity-60 transition-opacity duration-700">
-            <img
-              src={bounty.coverImage || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2000&auto=format&fit=crop"}
-              alt={bounty.name}
-              className="w-full h-full object-cover rounded-r-xl transform group-hover:scale-105 transition-transform duration-1000 ease-out"
-            />
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.05 }}
+      whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+      onClick={handleCardClick}
+      onHoverStart={() => router.prefetch(`/home/bounty/${bounty._id}`)}
+      className={`group relative rounded-2xl border bg-[#05070B]/50 backdrop-blur-md overflow-hidden w-full flex flex-col cursor-pointer shadow-2xl transition-all duration-500 
+        ${bounty.isBoosted 
+          ? 'border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.05)] ring-1 ring-white/10' 
+          : 'border-white/10 hover:border-blue-500/30 hover:shadow-blue-500/10'
+        }`}
+    >
+      {bounty.isBoosted && (
+        <div className="absolute top-0 right-0 z-10">
+          <div className="bg-white text-black text-[8px] font-black uppercase px-2 py-1 rounded-bl-lg shadow-lg flex items-center gap-1">
+            <Zap className="w-2 h-2 fill-black" />
+            Featured
           </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-[#05070B] via-[#05070B]/95 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#05070B]/80 via-transparent to-transparent" />
+        </div>
+      )}
+        {/* --- Image Section --- */}
+        <div className="relative aspect-[3/1.5] w-full overflow-hidden border-b border-white/5">
+          <img
+            src={bounty.coverImage || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2000&auto=format&fit=crop"}
+            alt={bounty.name}
+            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
+          />
+          <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent pointer-events-none" />
         </div>
 
-        <div className="relative z-10 p-3 sm:p-4 h-full flex flex-col justify-between">
-          <div className="flex justify-between items-start w-full">
-            <div className="inline-flex items-center px-2 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-[8px] sm:text-[9px] font-bold text-blue-400 uppercase tracking-[0.1em]">
-              {bounty.type || "FEATURED BOUNTY"}
+        {/* --- Details Section --- */}
+        <div className="p-3 flex flex-col gap-2.5 bg-linear-to-b from-transparent to-white/[0.02] flex-1">
+          {/* Metadata Row */}
+          <div className="flex justify-between items-center w-full">
+            <div className="inline-flex items-center px-1.5 py-0.5 rounded border border-blue-500/30 bg-blue-500/10 text-[10px] font-medium uppercase text-blue-400 shadow-sm">
+                {bounty.type || "FEATURED"}
             </div>
-
-            <div className="flex flex-col items-end gap-0.5">
-              <div className="text-[9px] sm:text-[10px] font-bold text-white/40 tracking-[0.1em] font-mono">
-                {bounty.xpReward}XP
-              </div>
-              {bounty.reward != null && (
-                <div className="text-[10px] sm:text-[11px] font-bold text-green-400/90 tracking-[0.05em] font-mono">
-                  {currencySymbol}{bounty.reward}
-                </div>
-              )}
+            
+            <div className="flex items-center gap-2 mb-2">
+               <div className="flex items-center gap-1 text-white/30 group-hover:text-primary transition-colors">
+                  <Gem className="w-3 h-3" />
+                  <span className="text-xs font-semibold font-mono uppercase tracking-tighter">{bounty.reward}</span>
+               </div>
+               
+               <div className="text-xs font-semibold text-white/40 tracking-widest font-mono uppercase">
+                <Zap className="w-3 h-3 inline ml-1" />  {bounty.xpReward}XP
+               </div>
             </div>
           </div>
 
-          <div className="mt-auto pr-6">
-            <h2 className="text-base sm:text-lg font-black italic text-white uppercase tracking-tight leading-none mb-1.5 drop-shadow-lg group-hover:text-blue-50 transition-colors line-clamp-1">
+          <div className="space-y-0.5">
+            <h2 className="text-sm sm:text-base font-black italic text-white uppercase tracking-tight leading-none drop-shadow-sm group-hover:text-blue-400 transition-colors line-clamp-1">
               {bounty.name}
             </h2>
-            <p className="text-[10px] sm:text-xs italic text-white/40 tracking-wide font-medium leading-[1.3] max-w-[90%] line-clamp-2">
+            <p className="text-[10px] sm:text-[11px] italic text-white/30 tracking-normal font-medium leading-relaxed line-clamp-1">
               {bounty.description}
             </p>
           </div>
 
-          <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-            <div className="h-1 w-4 sm:w-6 bg-[#0070F3] rounded-full shadow-[0_0_8px_rgba(0,112,243,0.8)]" />
-            <div className="h-1 w-1.5 bg-white/20 rounded-full" />
-            <div className="h-1 w-1.5 bg-white/20 rounded-full" />
+          {/* Action Area */}
+          <div className="mt-auto pt-2 space-y-2">
+            {!bounty.isCreator ? (
+              <button
+                type="button"
+                onClick={handleJoin}
+                disabled={btn.disabled || isJoining}
+                className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 disabled:opacity-70 whitespace-nowrap ${btn.className}`}
+              >
+                {isJoining ? (
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}>
+                    <Crosshair className="w-3 h-3" />
+                  </motion.div>
+                ) : (
+                  btn.icon
+                )}
+                {isJoining ? "Joining..." : btn.label}
+              </button>
+            ) : (
+              <div className="space-y-1.5">
+                {/* Analytics Button */}
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 border border-primary/50 text-primary bg-primary/5 hover:bg-primary/10 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/home/bounty/${bounty._id}/analytics`);
+                  }}
+                >
+                  <BarChart3 className="w-3 h-3" />
+                  View Analytics
+                </button>
+
+                {/* Boost Button or Featured Status */}
+                {bounty.isBoosted ? (
+                  <div className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-white/[0.03] text-white/50 border border-white/5 cursor-default">
+                    <Zap className="w-3 h-3 fill-white/50" />
+                    Featured
+                  </div>
+                ) : (
+                  <Link 
+                    href={`/home/bounty/${bounty._id}/boost`} 
+                    className="w-full"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 bg-white/10 text-white border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:bg-white/15 active:scale-95 cursor-pointer"
+                    >
+                      <Zap className="w-3 h-3 fill-white" />
+                      Boost Bounty
+                    </button>
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Footer Activity Indicator */}
+          <div className="pt-2 flex items-center justify-start gap-2 border-t border-white/20 ">
+           <Users2 className="w-3 h-3" /> 
+           <span className="text-[10px] font-semibold text-white/70">{bounty.participantCount} Hunters Joined</span>
           </div>
         </div>
-      </motion.div>
-    </Link>
+    </motion.div>
   );
 };

@@ -28,6 +28,7 @@ export const createBounty = mutation({
         xp: v.number(),
       })
     ),
+    deadline: v.number(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -75,40 +76,136 @@ export const createBounty = mutation({
 });
 
 /**
- * Retrieves a limited list of the most recent bounties.
- * Useful for initial loads or non-paginated lists.
+ * Helper to fetch the current user's document based on Clerk authentication.
+ */
+const getCurrentUser = async (ctx: any) => {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) return null;
+  return await ctx.db
+    .query("users")
+    .withIndex("by_token", (q: { eq: (arg0: string, arg1: any) => any; }) => q.eq("clerkToken", identity.tokenIdentifier))
+    .unique();
+};
+
+/**
+ * Centralized helper to enrich a raw bounty document with user-specific status flags
+ * and engagement metrics. Exported to be reused by participation queries.
+ */
+export async function enrichBountyDoc(ctx: any, bounty: any, user: any) {
+  const creator = await ctx.db.get(bounty.creatorId);
+  const participants = await ctx.db
+    .query("bountyParticipants")
+    .withIndex("by_bountyId", (q: any) => q.eq("bountyId", bounty._id))
+    .filter((q: any) => 
+      q.or(
+        q.eq(q.field("status"), "active"),
+        q.eq(q.field("status"), "submitted"),
+        q.eq(q.field("status"), "completed")
+      )
+    )
+    .collect();
+
+  let isJoined = false;
+  let isCompleted = false;
+  let userStatus: string | null = null;
+
+  if (user) {
+    const participation = await ctx.db
+      .query("bountyParticipants")
+      .withIndex("by_bountyId_userId", (q: any) => 
+        q.eq("bountyId", bounty._id).eq("userId", user._id)
+      )
+      .first();
+    
+    if (participation) {
+      userStatus = participation.status;
+      isJoined = userStatus === "active" || userStatus === "submitted" || userStatus === "completed";
+      isCompleted = userStatus === "completed";
+
+      // Dynamically verify completion if DB status is stale
+      if (!isCompleted && (userStatus === "active" || userStatus === "submitted")) {
+        const userSubmissions = await ctx.db
+          .query("questSubmissions")
+          .withIndex("by_bountyId_userId", (q: any) => 
+            q.eq("bountyId", bounty._id).eq("userId", user._id)
+          )
+          .collect();
+        const resolvedIndices = new Set(
+          userSubmissions
+            .filter((s: any) => s.status === "approved" || s.status === "rejected")
+            .map((s: any) => s.taskIndex)
+        );
+        if (bounty.tasks && bounty.tasks.length > 0) {
+          isCompleted = bounty.tasks.every((_: any, i: number) => resolvedIndices.has(i));
+        }
+      }
+    }
+  }
+
+  return {
+    ...bounty,
+    participantCount: participants.length,
+    isJoined,
+    isCompleted,
+    userStatus,
+    isCreator: user ? bounty.creatorId === user._id : false,
+    creatorName: creator?.name || "Anonymous",
+    isBoosted: bounty.isBoosted && (bounty.boostEndsAt ?? 0) > Date.now(),
+    boostEndsAt: bounty.boostEndsAt,
+  };
+}
+
+/**
+ * Retrieves a limited list of the most recent bounties with user-specific status.
  */
 export const getBounties = query({
   args: {
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
     const limit = Math.min(args.limit ?? 50, 100);
-    return await ctx.db.query("bounties").order("desc").take(limit);
+    const bounties = await ctx.db.query("bounties").order("desc").take(limit);
+
+    return await Promise.all(
+      bounties.map((b) => enrichBountyDoc(ctx, b, user))
+    );
   },
 });
 
 /**
  * Retrieves a paginated list of bounties for infinite scrolling.
- * Employs Convex's built-in pagination mechanics.
+ * Includes user-specific relation flags.
  */
 export const getBountiesPaginated = query({
   args: { paginationOpts: paginationOptsValidator },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const user = await getCurrentUser(ctx);
+    const paginated = await ctx.db
       .query("bounties")
       .order("desc")
       .paginate(args.paginationOpts);
+
+    return {
+      ...paginated,
+      page: await Promise.all(
+        paginated.page.map((b) => enrichBountyDoc(ctx, b, user))
+      ),
+    };
   },
 });
 
 /**
- * Fetches the complete details for a specific bounty by its ID.
+ * Fetches detail for a specific bounty including user-specific status.
  */
 export const getBounty = query({
   args: { id: v.id("bounties") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    const user = await getCurrentUser(ctx);
+    const bounty = await ctx.db.get(args.id);
+    if (!bounty) return null;
+
+    return await enrichBountyDoc(ctx, bounty, user);
   },
 });
 
@@ -137,6 +234,7 @@ export const updateBounty = mutation({
         xp: v.number(),
       })
     ),
+    deadline: v.number(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -192,7 +290,71 @@ export const updateBounty = mutation({
 export const getTrendingBounties = query({
   args: {},
   handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
     const recent = await ctx.db.query("bounties").order("desc").take(50);
-    return recent.sort((a, b) => b.xpReward - a.xpReward).slice(0, 5);
+    const enriched = await Promise.all(
+      recent.map((b) => enrichBountyDoc(ctx, b, user))
+    );
+    return enriched.sort((a, b) => (b.participantCount || 0) - (a.participantCount || 0)).slice(0, 5);
+  },
+});
+
+/**
+ * Retrieves currently boosted bounties.
+ */
+export const getBoostedBounties = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    const boosted = await ctx.db
+      .query("bounties")
+      .filter((q) => 
+        q.and(
+          q.eq(q.field("isBoosted"), true),
+          q.gt(q.field("boostEndsAt"), Date.now())
+        )
+      )
+      .collect();
+
+    return await Promise.all(
+      boosted.map((b) => enrichBountyDoc(ctx, b, user))
+    );
+  },
+});
+
+/**
+ * Activates boost on a bounty after successful payment verification.
+ * Called from the client after the existing /api/payments/razorpay/verify route confirms the signature.
+ */
+export const activateBountyBoost = mutation({
+  args: {
+    bountyId: v.id("bounties"),
+    days: v.number(),
+    startDate: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("clerkToken", identity.tokenIdentifier))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    const bounty = await ctx.db.get(args.bountyId);
+    if (!bounty) throw new Error("Bounty not found");
+    if (bounty.creatorId !== user._id) throw new Error("Not the creator");
+
+    const boostEndsAt = args.startDate + args.days * 24 * 60 * 60 * 1000;
+
+    await ctx.db.patch(args.bountyId, {
+      isBoosted: true,
+      boostStartedAt: args.startDate,
+      boostEndsAt,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
   },
 });

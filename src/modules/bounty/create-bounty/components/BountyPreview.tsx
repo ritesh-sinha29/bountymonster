@@ -28,7 +28,7 @@ export const BountyPreview = ({ watchAll, tasksCount, reward }: { watchAll: any;
               animate={{ opacity: 0.6 }}
               src={watchAll.coverImage} 
               alt="Cover" 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover opacity-60"
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center text-white/20 gap-3">

@@ -29,12 +29,12 @@ const formSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters").max(700, "Description maximum 700 letters"),
   maxHunters: z.number().min(5, "At least 5 hunters required"),
   reward: z.number().min(0, "Must be positive"),
-  currency: z.string().min(1, "Please select a currency"),
   type: z.string().min(1, "Please select a bounty type"),
   coverImage: z.string().url("Must be a valid cover image URL"),
   xpReward: z.number(),
   requirementLevel: z.number().min(1, "Minimum level requirement is 1"),
   tasks: z.array(taskSchema).min(1, "At least one task is required"),
+  deadline: z.date(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -70,12 +70,12 @@ const EditBountyPage = () => {
       description: "",
       maxHunters: undefined,
       reward: undefined,
-      currency: "",
       type: "",
       coverImage: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&q=80&w=1000",
       xpReward: undefined,
       requirementLevel: 1,
       tasks: [{ name: "", description: "", url: "", xp: 0 }],
+      deadline: undefined as any,
     },
   });
 
@@ -98,12 +98,13 @@ const EditBountyPage = () => {
         description: existingBounty.description,
         maxHunters: existingBounty.maxHunters || 10,
         reward: existingBounty.reward,
-        currency: existingBounty.currency || "USD",
+        // currency removed
         type: existingBounty.type,
         coverImage: existingBounty.coverImage,
         xpReward: existingBounty.xpReward,
         requirementLevel: existingBounty.requirementLevel,
         tasks: existingBounty.tasks || [{ name: "", description: "", url: "", xp: 0 }],
+        deadline: new Date(existingBounty.deadline),
       });
       setDataLoaded(true);
     }
@@ -114,7 +115,6 @@ const EditBountyPage = () => {
   const tasks = form.watch("tasks");
   const maxHunters = form.watch("maxHunters");
   const reward = form.watch("reward");
-  const currency = form.watch("currency");
 
   useEffect(() => {
     const totalXP = calculateTotalXP(tasks?.length || 0);
@@ -123,15 +123,6 @@ const EditBountyPage = () => {
     }
   }, [tasks?.length, form, xpReward]);
 
-  const getCurrencySymbol = (code: string) => {
-    const symbols: Record<string, string> = {
-      USD: "$", EUR: "€", GBP: "£", INR: "₹", AUD: "A$", CAD: "C$", 
-      JPY: "¥", CNY: "¥", CHF: "₣", SGD: "S$", NZD: "NZ$",
-      ETH: "Ξ", BTC: "₿", USDC: "USDC", USDT: "USDT", SOL: "SOL"
-    };
-    return symbols[code] || code;
-  };
-  const currencySymbol = getCurrencySymbol(currency || "USD");
   const rewardPerHunter = Math.floor((reward || 0) / (maxHunters > 0 ? maxHunters : 1));
 
   const onSubmit = async (values: FormValues) => {
@@ -151,12 +142,13 @@ const EditBountyPage = () => {
         reward: values.reward,
         maxHunters: values.maxHunters,
         rewardPerHunter: Math.floor(values.reward / values.maxHunters),
-        currency: values.currency,
+        // currency removed
         type: values.type,
         coverImage: values.coverImage,
         xpReward: values.xpReward,
         requirementLevel: values.requirementLevel,
         tasks: finalTasks,
+        deadline: values.deadline.getTime(),
       });
 
       toast.success("Bounty updated successfully!");
@@ -202,7 +194,7 @@ const EditBountyPage = () => {
           <div className="lg:col-span-7 space-y-8">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <BountyBasicDetails form={form} rewardPerHunter={rewardPerHunter} currencySymbol={currencySymbol} />
+                <BountyBasicDetails form={form} rewardPerHunter={rewardPerHunter} />
                 <BountyTaskFields form={form} fields={fields} append={append} remove={remove} currentTaskXP={currentTaskXP} />
 
                 <Button 
@@ -217,7 +209,7 @@ const EditBountyPage = () => {
           </div>
 
           <div className="lg:col-span-5 relative">
-            <BountyPreview watchAll={watchAll} tasksCount={tasks?.length || 0} reward={reward || 0} currencySymbol={currencySymbol} />
+            <BountyPreview watchAll={watchAll} tasksCount={tasks?.length || 0} reward={reward || 0} />
           </div>
         </div>
       </div>

@@ -4,12 +4,13 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Coins, Trophy, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Coins, Trophy, CheckCircle2, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { EditBountyButton } from "@/modules/bounty/components/EditBountyButton";
 import { JoinPanel } from "@/modules/bounty/components/BountyJoinPanel";
 import { QuestRow } from "@/modules/bounty/components/QuestRow";
+import Link from "next/link";
 
 export default function BountyDetail() {
   const params = useParams();
@@ -20,6 +21,8 @@ export default function BountyDetail() {
   const participation = useQuery(api.participants.getMyParticipation, {
     bountyId,
   });
+  const participantCount = useQuery(api.participants.getParticipantCount, { bountyId });
+  const allSubmissions = useQuery(api.participants.getSubmissionsForBounty, { bountyId });
 
   if (bounty === undefined) {
     return (
@@ -46,20 +49,13 @@ export default function BountyDetail() {
     );
   }
 
-  const currencySymbol =
-    bounty.currency === "INR"
-      ? "₹"
-      : bounty.currency === "EUR"
-        ? "€"
-        : bounty.currency === "GBP"
-          ? "£"
-          : "$";
+  const currencySymbol = "$";
   const rewardDisplay =
     bounty.rewardPerHunter !== undefined
       ? bounty.rewardPerHunter
       : bounty.reward;
 
-  const isParticipating = participation?.status === "active";
+  const isParticipating = participation?.status === "active" || participation?.status === "completed";
 
   return (
     <div className="min-h-full pb-20">
@@ -76,7 +72,6 @@ export default function BountyDetail() {
             loading="eager"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#05070B] via-[#05070B]/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#05070B] via-[#05070B]/80 to-transparent" />
         </div>
 
         <div className="relative z-10 h-full max-w-7xl mx-auto px-6 pt-8 flex flex-col justify-between">
@@ -89,12 +84,22 @@ export default function BountyDetail() {
               Back to Bounties
             </button>
 
-            {/* Deferred — only renders if user is the creator */}
-            <EditBountyButton
-              bountyId={bounty._id}
-              createdAt={bounty.createdAt}
-              editedAt={bounty.editedAt}
-            />
+            <div className="flex items-center gap-3">
+              {bounty.isCreator && (
+                <Link href={`/home/bounty/${bountyId}/analytics`}>
+                   <button className="group flex items-center gap-2 px-4 py-2 rounded-xl border border-primary/30 bg-primary/10 backdrop-blur-sm text-primary text-sm font-semibold tracking-wide transition-all duration-300 hover:bg-primary/20 hover:border-primary/50 hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.15)] cursor-pointer">
+                      <BarChart3 className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
+                      View Analytics
+                   </button>
+                </Link>
+              )}
+              {/* Deferred — only renders if user is the creator */}
+              <EditBountyButton
+                bountyId={bounty._id}
+                createdAt={bounty.createdAt}
+                editedAt={bounty.editedAt}
+              />
+            </div>
           </div>
 
           <div className="pb-10">
@@ -122,9 +127,22 @@ export default function BountyDetail() {
         <div className="lg:col-span-2 space-y-10">
           {/* Briefing */}
           <section className="space-y-4">
-            <h3 className="text-lg font-bold text-white/40 uppercase tracking-[0.15em] border-b border-white/5 pb-2">
-              Bounty Briefing
-            </h3>
+            <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+              <h3 className="text-lg font-bold text-white uppercase tracking-[0.15em]">
+                Bounty Briefing
+              </h3>
+              <div className="flex items-center gap-4">
+                 <div className="flex flex-col items-end">
+                    <span className="text-xs font-bold text-white/30 uppercase tracking-widest">Hunters Joined</span>
+                    <span className="text-base font-black text-white">{participantCount ?? 0}</span>
+                 </div>
+                 <div className="w-px h-8 bg-white/10" />
+                 <div className="flex flex-col items-end">
+                    <span className="text-xs font-bold text-white/30 uppercase tracking-widest">Total Quests</span>
+                    <span className="text-base font-black text-white">{bounty.tasks?.length ?? 0}</span>
+                 </div>
+              </div>
+            </div>
             <p className="text-white/80 leading-relaxed font-medium whitespace-pre-wrap break-words">
               {bounty.description}
             </p>
@@ -152,6 +170,9 @@ export default function BountyDetail() {
                   idx={idx}
                   bountyId={bountyId}
                   isParticipating={isParticipating}
+                  isCompleted={participation?.status === "completed"}
+                  isCreator={bounty.isCreator}
+                  allSubmissions={allSubmissions}
                 />
               ))}
               {(!bounty.tasks || bounty.tasks.length === 0) && (

@@ -13,7 +13,7 @@ export const TrendingNow = () => {
     <div className="flex flex-col flex-1 max-h-[400px] bg-[#05070A] border border-white/10 rounded-xl overflow-hidden mb-6 shadow-sm">
       <div className="px-4 py-5 flex items-center justify-between border-b border-white/6 bg-black/20">
         <div className="flex items-center gap-2">
-          <Flame className="size-5 text-orange-500 fill-orange-500/20" />
+          <Flame className="size-5 text-primary" />
           <h3 className="text-base font-semibold text-white/90 tracking-tight">
             Trending Bounties
           </h3>
@@ -36,15 +36,15 @@ export const TrendingNow = () => {
             ))}
           </div>
         ) : trendingBounties.length > 0 ? (
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-3">
             {trendingBounties.map((b, index) => (
               <Link
                 href={`/home/bounty/${b._id}`}
                 key={b._id}
-                className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/4 transition-all group border border-transparent hover:border-white/5"
+                className="flex items-center justify-between px-3 py-1.5 rounded-md bg-white/4 transition-all group border"
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-[11px] font-mono text-white/20 tabular-nums w-4">
+                  <span className="text-[11px] font-mono text-primary tabular-nums w-4">
                     {(index + 1).toString().padStart(2, "0")}
                   </span>
                   <div className="flex flex-col">
@@ -60,7 +60,7 @@ export const TrendingNow = () => {
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="flex flex-col items-end">
-                    <span className="text-[11px] font-bold text-orange-500">
+                    <span className="text-[11px] font-bold text-primary">
                       +{b.xpReward} XP
                     </span>
                     <span className="text-[9px] text-white/30 font-medium">

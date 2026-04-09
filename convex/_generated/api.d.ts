@@ -8,12 +8,15 @@
  * @module
  */
 
+import type * as analytics from "../analytics.js";
 import type * as bounties from "../bounties.js";
 import type * as characters from "../characters.js";
 import type * as leaderboard from "../leaderboard.js";
 import type * as notifications from "../notifications.js";
 import type * as participants from "../participants.js";
+import type * as payments from "../payments.js";
 import type * as search from "../search.js";
+import type * as subscriptions from "../subscriptions.js";
 import type * as users from "../users.js";
 
 import type {
@@ -23,12 +26,15 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  analytics: typeof analytics;
   bounties: typeof bounties;
   characters: typeof characters;
   leaderboard: typeof leaderboard;
   notifications: typeof notifications;
   participants: typeof participants;
+  payments: typeof payments;
   search: typeof search;
+  subscriptions: typeof subscriptions;
   users: typeof users;
 }>;
 

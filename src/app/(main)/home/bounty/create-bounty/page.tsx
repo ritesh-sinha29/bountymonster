@@ -40,6 +40,7 @@ const formSchema = z.object({
   xpReward: z.number(),
   requirementLevel: z.number().min(1, "Minimum level requirement is 1"),
   tasks: z.array(taskSchema).min(1, "At least one task is required"),
+  deadline: z.date(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -66,6 +67,7 @@ const CreateBountyPage = () => {
       xpReward: undefined,
       requirementLevel: 1,
       tasks: [{ name: "", description: "", url: "", xp: 150 }],
+      deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default to 7 days from now
     },
   });
 
@@ -142,6 +144,7 @@ const CreateBountyPage = () => {
         xpReward: values.xpReward,
         requirementLevel: values.requirementLevel,
         tasks: finalTasks,
+        deadline: values.deadline.getTime(),
       });
 
       toast.success("Bounty launched successfully!", {

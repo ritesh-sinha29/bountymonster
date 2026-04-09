@@ -39,7 +39,6 @@ export const changeCharacter = mutation({
   args: {
     characterName: v.string(),
     theme: v.string(),
-    userAvatar: v.string(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -68,13 +67,10 @@ export const changeCharacter = mutation({
         userId: user._id,
         characterName: args.characterName,
         theme: args.theme,
-        xp: 0,
-        level: 1,
       });
     }
 
     await ctx.db.patch(user._id, {
-      userAvatar: args.userAvatar,
       updatedAT: Date.now(),
     });
   },
@@ -108,12 +104,12 @@ export const awardXp = mutation({
 
     if (!character) throw new Error("Character not found. Please select a character first.");
 
-    const prevXp = character.xp ?? 0;
-    const prevLevel = character.level ?? 1;
+    const prevXp = user.xp ?? 0;
+    const prevLevel = user.level ?? 1;
     const newXp = prevXp + args.amount;
     const newLevel = getLevelFromXp(newXp);
 
-    await ctx.db.patch(character._id, {
+    await ctx.db.patch(user._id, {
       xp: newXp,
       level: newLevel,
     });

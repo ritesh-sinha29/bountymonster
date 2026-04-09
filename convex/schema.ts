@@ -1,18 +1,15 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-
 export default defineSchema({
   users: defineTable({
     clerkToken: v.string(),
     name: v.optional(v.string()), // Used as the primary username
     email: v.string(),
     userAvatar: v.optional(v.string()),
-    userType: v.union(
-      v.literal("user"),
-      v.literal("admin"),
-    ),
+    userType: v.union(v.literal("user"), v.literal("admin")),
     planType: v.union(v.literal("free"), v.literal("pro"), v.literal("elite")),
+    razorpaySubscriptionId: v.optional(v.string()), // stored on Pro subscription, cleared on cancel
     socialLinks: v.optional(
       v.array(
         v.object({
@@ -27,6 +24,9 @@ export default defineSchema({
     mainMoto: v.optional(v.string()),
     createdAT: v.number(),
     updatedAT: v.number(),
+    // newly added....
+    xp: v.optional(v.number()),
+    level: v.number(), 
   }).index("by_token", ["clerkToken"]),
 
   // --------------------------------------------------
@@ -35,8 +35,8 @@ export default defineSchema({
     characterName: v.string(),
     characterAvatar: v.optional(v.string()),
     theme: v.string(),
-    xp: v.optional(v.number()),
-    level: v.optional(v.number()),
+    // xp: v.optional(v.number()),
+    // level: v.optional(v.number()),
   }).index("by_userId", ["userId"]),
 
   // -----------------------------------------------------
@@ -65,8 +65,12 @@ export default defineSchema({
       }),
     ),
     createdAt: v.number(),
+    deadline: v.number(),
     updatedAt: v.number(),
     editedAt: v.optional(v.number()),
+    isBoosted: v.optional(v.boolean()),
+    boostStartedAt: v.optional(v.number()),
+    boostEndsAt: v.optional(v.number()),
   }).index("by_creatorId", ["creatorId"]),
 
   bountyParticipants: defineTable({
@@ -74,9 +78,10 @@ export default defineSchema({
     userId: v.id("users"),
     joinedAt: v.number(),
     status: v.union(
-      v.literal("active"),   
-      v.literal("left"),     
+      v.literal("active"),
+      v.literal("left"),
       v.literal("submitted"),
+      v.literal("completed"),
     ),
     leftAt: v.optional(v.number()),
   })
@@ -87,10 +92,11 @@ export default defineSchema({
   questSubmissions: defineTable({
     bountyId: v.id("bounties"),
     userId: v.id("users"),
-    taskIndex: v.number(),       
-    proofUrls: v.array(v.string()), 
+    taskIndex: v.number(),
+    proofUrls: v.array(v.string()),
     note: v.optional(v.string()),
     submittedAt: v.number(),
+    resolvedAt: v.optional(v.number()),
     status: v.union(
       v.literal("pending"),
       v.literal("approved"),
@@ -103,11 +109,11 @@ export default defineSchema({
     .index("by_bountyId_userId_taskIndex", ["bountyId", "userId", "taskIndex"]),
 
   notifications: defineTable({
-    userId: v.id("users"),          
-    type: v.string(),              
+    userId: v.id("users"),
+    type: v.string(),
     title: v.string(),
     body: v.string(),
-    link: v.optional(v.string()),  
+    link: v.optional(v.string()),
     read: v.boolean(),
     createdAt: v.number(),
   }).index("by_userId", ["userId"]),
@@ -122,14 +128,14 @@ export default defineSchema({
 
   huntBonusClaims: defineTable({
     userId: v.id("users"),
-    milestoneKey: v.string(), 
+    milestoneKey: v.string(),
     xpAwarded: v.number(),
     claimedAt: v.number(),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_milestone", ["userId", "milestoneKey"]),
-    
-// -----------------------------------------------------------
+
+  // -----------------------------------------------------------
 
   searchHistory: defineTable({
     userId: v.id("users"),

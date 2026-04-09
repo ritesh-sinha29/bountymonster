@@ -9,6 +9,7 @@ import {
   Flame,
   Globe,
   Loader2,
+  PlusCircle,
   Rocket,
   Star,
   Trophy,
@@ -25,6 +26,7 @@ import { TrendingNow } from "@/modules/home/components/TrendingNow";
 import { HuntToEarn } from "@/modules/home/components/HuntToEarn";
 import { ExploreBounties } from "@/modules/bounty/components/ExploreBounties";
 import { api } from "../../../../convex/_generated/api";
+import { Button } from "@/components/ui/button";
 
 // ─── Real Time Data ────────────────────────────────────────────────────────────────
 
@@ -34,7 +36,7 @@ const HomePage = () => {
   const { results: bounties } = useConvexPaginatedQuery(
     api.bounties.getBountiesPaginated,
     {},
-    { initialNumItems: 10 }
+    { initialNumItems: 3 }
   );
 
   const getBountyIcon = (type: string) => {
@@ -75,20 +77,22 @@ const HomePage = () => {
           <section className="space-y-4 pt-6">
             <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-2">
-                <Globe className="size-4 text-primary" />
+                <Globe className="size-6 text-primary" />
                 <h2 className="text-lg font-bold tracking-tight uppercase">
                   Explore <span className="text-white">Bounties</span>
                 </h2>
               </div>
               <Link 
                 href="/home/bounty" 
-                className="text-xs font-bold text-primary hover:text-white transition-colors uppercase tracking-widest"
+                className="cursor-pointer"
               >
-                View All
+                <Button size='sm' variant={'outline'} className="text-white hover:text-white px-5! text-xs">
+                  View All <PlusCircle/>
+                </Button>
               </Link>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <ExploreBounties bounties={bounties} currentUser={user} />
             </div>
           </section>

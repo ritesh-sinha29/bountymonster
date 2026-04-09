@@ -1,7 +1,9 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 import { insertNotification } from "./notifications";
 import { getXpPerTask, getLevelFromXp } from "../src/lib/xpConfig";
+import { enrichBountyDoc } from "./bounties";
 
 /**
  * Retrieves the currently authenticated user from the local database.
@@ -33,8 +35,12 @@ export const joinBounty = mutation({
     const bounty = await ctx.db.get(args.bountyId);
     if (!bounty) throw new Error("Bounty not found");
     if (bounty.status !== "active") throw new Error("Bounty is not active");
+    if (Date.now() > bounty.deadline) throw new Error("Bounty deadline has passed");
     if (bounty.creatorId === user._id)
       throw new Error("You cannot join your own bounty");
+    
+    if ((user.level ?? 1) < (bounty.requirementLevel ?? 1))
+      throw new Error(`Level ${bounty.requirementLevel} required to join this bounty`);
 
     const existing = await ctx.db
       .query("bountyParticipants")
@@ -171,11 +177,20 @@ export const getMyJoinedBounties = query({
     const participations = await ctx.db
       .query("bountyParticipants")
       .withIndex("by_userId", (q: any) => q.eq("userId", user._id))
-      .filter((q: any) => q.eq(q.field("status"), "active"))
+      .filter((q: any) => 
+        q.or(
+          q.eq(q.field("status"), "active"),
+          q.eq(q.field("status"), "completed")
+        )
+      )
       .take(200);
 
     const bounties = await Promise.all(
-      participations.map((p: any) => ctx.db.get(p.bountyId)),
+      participations.map(async (p: any) => {
+        const doc = await ctx.db.get(p.bountyId);
+        if (!doc) return null;
+        return await enrichBountyDoc(ctx, doc, user);
+      }),
     );
 
     return bounties.filter(Boolean);
@@ -297,41 +312,180 @@ export const approveSubmission = mutation({
 
     const bounty = await ctx.db.get(submission.bountyId);
     if (!bounty) throw new Error("Bounty not found");
+    
+    // Authorization check: only creator can approve
+    const authedUser = await getAuthedUser(ctx);
+    if (bounty.creatorId !== authedUser._id) {
+      throw new Error("Only the bounty creator can approve submissions.");
+    }
 
     const xpAmount = getXpPerTask(bounty.requirementLevel ?? 1);
 
-    await ctx.db.patch(args.submissionId, { status: "approved" });
+    await ctx.db.patch(args.submissionId, { 
+      status: "approved",
+      resolvedAt: Date.now(),
+    });
 
-    const character = await ctx.db
-      .query("characters")
-      .withIndex("by_userId", (q: any) => q.eq("userId", submission.userId))
-      .first();
+    const user = await ctx.db.get(submission.userId);
+    if (!user) throw new Error("User not found");
 
-    if (character) {
-      const prevXp = character.xp ?? 0;
-      const prevLevel = character.level ?? 1;
-      const newXp = prevXp + xpAmount;
-      const newLevel = getLevelFromXp(newXp);
+    const taskXp = bounty.tasks?.[submission.taskIndex]?.xp ?? xpAmount;
+    const prevXp = user.xp ?? 0;
+    const prevLevel = user.level ?? 1;
+    const newXp = prevXp + taskXp;
+    const newLevel = getLevelFromXp(newXp);
 
-      await ctx.db.patch(character._id, { xp: newXp, level: newLevel });
+    await ctx.db.patch(user._id, { xp: newXp, level: newLevel });
 
+    await insertNotification(ctx, {
+      userId: submission.userId,
+      type: "quest_approved",
+      title: `✅ Quest approved! +${taskXp} XP`,
+      body: `Your submission for "${bounty.tasks?.[submission.taskIndex]?.name ?? `Task ${submission.taskIndex + 1}`}" was approved.`,
+      link: `/home/bounty/${submission.bountyId}`,
+    });
+
+    if (newLevel > prevLevel) {
       await insertNotification(ctx, {
         userId: submission.userId,
-        type: "quest_approved",
-        title: `✅ Quest approved! +${xpAmount} XP`,
-        body: `Your submission for "${bounty.tasks?.[submission.taskIndex]?.name ?? `Task ${submission.taskIndex + 1}`}" was approved.`,
-        link: `/home/bounty/${submission.bountyId}`,
+        type: "level_up",
+        title: `🎉 Level Up! You're now Lv.${newLevel}`,
+        body: `You've reached Level ${newLevel}! New challenges and XP await.`,
       });
+    }
 
-      if (newLevel > prevLevel) {
+    // Check for Bounty Completion (Individual and Global)
+    await checkAndMarkBountyCompleted(ctx, submission.bountyId, submission.userId);
+  },
+});
+
+/**
+ * Marks a submission as rejected.
+ * Also checks if the bounty should be marked as completed.
+ */
+export const rejectSubmission = mutation({
+  args: { submissionId: v.id("questSubmissions") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const submission = await ctx.db.get(args.submissionId);
+    if (!submission) throw new Error("Submission not found");
+    if (submission.status !== "pending") throw new Error("Only pending submissions can be rejected");
+
+    const bounty = await ctx.db.get(submission.bountyId);
+    if (!bounty) throw new Error("Bounty not found");
+
+    // Authorization check
+    const authedUser = await getAuthedUser(ctx);
+    if (bounty.creatorId !== authedUser._id) {
+      throw new Error("Only the bounty creator can reject submissions.");
+    }
+
+    await ctx.db.patch(args.submissionId, { 
+      status: "rejected",
+      resolvedAt: Date.now(),
+    });
+
+    await insertNotification(ctx, {
+      userId: submission.userId,
+      type: "quest_rejected",
+      title: "❌ Quest rejected",
+      body: `Your submission for "${bounty.tasks?.[submission.taskIndex]?.name ?? `Task ${submission.taskIndex + 1}`}" was rejected.`,
+      link: `/home/bounty/${submission.bountyId}`,
+    });
+
+    // Check for Bounty Completion (Individual and Global)
+    await checkAndMarkBountyCompleted(ctx, submission.bountyId, submission.userId);
+  },
+});
+
+/**
+ * Helper to check if a bounty is finished for a specific user and globally.
+ */
+async function checkAndMarkBountyCompleted(ctx: any, bountyId: Id<"bounties">, userId?: Id<"users">) {
+  const bounty = await ctx.db.get(bountyId);
+  if (!bounty) return;
+
+  const tasks = bounty.tasks ?? [];
+  if (tasks.length === 0) return;
+
+  // 1. Individual Hunter Completion Check
+  if (userId) {
+    const userSubmissions = await ctx.db
+      .query("questSubmissions")
+      .withIndex("by_bountyId_userId", (q: any) => q.eq("bountyId", bountyId).eq("userId", userId))
+      .collect();
+
+    const resolvedIndices = new Set(
+      userSubmissions
+        .filter((s: any) => s.status === "approved" || s.status === "rejected")
+        .map((s: any) => s.taskIndex)
+    );
+
+    // Explicitly verify every task defined in the bounty document is resolved
+    const allTasksDone = tasks.every((_: any, i: number) => resolvedIndices.has(i));
+
+    if (allTasksDone) {
+      const participation = await ctx.db
+        .query("bountyParticipants")
+        .withIndex("by_bountyId_userId", (q: any) => q.eq("bountyId", bountyId).eq("userId", userId))
+        .first();
+      
+      // We check for any non-terminal state (!== 'completed')
+      if (participation && participation.status !== "completed") {
+        await ctx.db.patch(participation._id, { status: "completed" });
+        
+        // Notify the hunter immediately
         await insertNotification(ctx, {
-          userId: submission.userId,
-          type: "level_up",
-          title: `🎉 Level Up! You're now Lv.${newLevel}`,
-          body: `You've reached Level ${newLevel}! New challenges and XP await.`,
+          userId,
+          type: "bounty_completed",
+          title: "🎉 Bounty Completion Unlocked!",
+          body: `Great work! You have finished all quests for "${bounty.name}" and earned your rewards.`,
+          link: `/home/bounty/${bountyId}`,
         });
       }
     }
+  }
+}
+
+/**
+ * Fetches all submissions for a specific bounty, including basic user details.
+ * Restricted to the bounty creator.
+ */
+export const getSubmissionsForBounty = query({
+  args: { bountyId: v.id("bounties") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q: any) =>
+        q.eq("clerkToken", identity.tokenIdentifier),
+      )
+      .unique();
+    if (!user) return [];
+
+    const bounty = await ctx.db.get(args.bountyId);
+    if (!bounty || bounty.creatorId !== user._id) return [];
+
+    const submissions = await ctx.db
+      .query("questSubmissions")
+      .withIndex("by_bountyId", (q: any) => q.eq("bountyId", args.bountyId))
+      .order("desc")
+      .collect();
+
+    return await Promise.all(
+      submissions.map(async (s) => {
+        const submitter = await ctx.db.get(s.userId);
+        return {
+          ...s,
+          submitterName: submitter?.name || "Anonymous Hunter",
+          submitterAvatar: submitter?.userAvatar,
+        };
+      })
+    );
   },
 });
 
@@ -516,16 +670,10 @@ export const claimHuntBonus = mutation({
     if (!eligible) throw new Error("No milestone available to claim.");
 
     // ── award XP ──
-    const character = await ctx.db
-      .query("characters")
-      .withIndex("by_userId", (q: any) => q.eq("userId", user._id))
-      .first();
-    if (!character) throw new Error("Character not found.");
-
-    const prevXp = character.xp ?? 0;
+    const prevXp = user.xp ?? 0;
     const newXp = prevXp + eligible.xp;
     const newLevel = getLevelFromXp(newXp);
-    await ctx.db.patch(character._id, { xp: newXp, level: newLevel });
+    await ctx.db.patch(user._id, { xp: newXp, level: newLevel });
 
     // ── record claim ──
     await ctx.db.insert("huntBonusClaims", {
@@ -543,5 +691,51 @@ export const claimHuntBonus = mutation({
     });
 
     return { xpAwarded: eligible.xp, newXp, newLevel };
+  },
+});
+
+/**
+ * Administrative mutation to repair participation statuses.
+ * Checks all active participations for a user and marks them as completed if all tasks are resolved.
+ */
+export const repairMyParticipationStatuses = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getAuthedUser(ctx);
+    
+    // Find all participations that are not yet marked completed
+    const participations = await ctx.db
+      .query("bountyParticipants")
+      .withIndex("by_userId", (q: any) => q.eq("userId", user._id))
+      .filter((q: any) => q.neq(q.field("status"), "completed"))
+      .collect();
+
+    let repairedCount = 0;
+    for (const p of participations) {
+      const bounty = await ctx.db.get(p.bountyId);
+      if (!bounty || !bounty.tasks || bounty.tasks.length === 0) continue;
+
+      const userSubmissions = await ctx.db
+        .query("questSubmissions")
+        .withIndex("by_bountyId_userId", (q: any) => 
+          q.eq("bountyId", p.bountyId).eq("userId", user._id)
+        )
+        .collect();
+
+      const resolvedIndices = new Set(
+        userSubmissions
+          .filter((s: any) => s.status === "approved" || s.status === "rejected")
+          .map((s: any) => s.taskIndex)
+      );
+
+      const allTasksDone = bounty.tasks.every((_: any, i: number) => resolvedIndices.has(i));
+
+      if (allTasksDone) {
+        await ctx.db.patch(p._id, { status: "completed" });
+        repairedCount++;
+      }
+    }
+
+    return { repairedCount };
   },
 });

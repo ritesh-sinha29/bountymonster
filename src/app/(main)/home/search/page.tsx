@@ -18,15 +18,26 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
+import { BountyCard } from "@/modules/bounty/components/bountyCard";
 
 const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
-  // Real history query from Convex
+  const currentUser = useQuery(api.users.getCurrentUser);
+  const results = useQuery(api.search.searchBounties, { queryText: searchQuery }) || [];
   const history = useQuery(api.search.getHistory) || [];
+
+  const saveToHistory = useMutation(api.search.saveHistory);
   const clearHistory = useMutation(api.search.clearAllHistory);
   const deleteHistoryItem = useMutation(api.search.deleteHistory);
+
+  const handleSearch = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (searchQuery.trim()) {
+      saveToHistory({ queryText: searchQuery.trim() });
+    }
+  };
 
   return (
     <div className="p-6">
@@ -66,11 +77,13 @@ const SearchPage = () => {
               className="flex-1 bg-transparent border-none outline-none text-base text-white placeholder:text-white/20 px-2 h-9"
               onFocus={() => setIsFocused(true)}
               onBlur={() => {
-                // Delay blur to allow clicking dropdown items
                 setTimeout(() => setIsFocused(false), 200);
               }}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSearch();
+              }}
             />
 
             <div className="flex items-center gap-2 pr-1.5">
@@ -100,7 +113,10 @@ const SearchPage = () => {
               >
                 <SlidersHorizontal className="size-4" />
               </Button>
-              <Button className="h-9 text-white bg-primary cursor-pointer">
+              <Button 
+                className="h-9 text-white bg-primary cursor-pointer hover:brightness-110 active:scale-95 transition-all"
+                onClick={() => handleSearch()}
+              >
                 Search <ArrowRight className="size-3.5" />
               </Button>
             </div>
@@ -165,81 +181,112 @@ const SearchPage = () => {
         </div>
       </div>
 
-      {/* ── SEARCH RESULTS / HISTORY DISPLAY ── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="space-y-6 pt-6"
-      >
-        <div className="flex items-center justify-between border-b border-white/5 pb-4 mt-10">
-          <div className="flex items-center gap-2">
-            <History className="size-4 text-white/40" />
-            <h2 className="text-base font-semibold text-white tracking-tight">
-              Recent Interactions
-            </h2>
-          </div>
-          {history.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-[11px] text-white/30 hover:text-red-400 hover:bg-red-500/5 transition-all gap-1.5"
-              onClick={() => clearHistory()}
-            >
-              <Trash2 className="size-3.5" /> Clear History
-            </Button>
-          )}
-        </div>
-
-        {history.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 px-6 border border-dashed border-white/5 rounded-3xl bg-white/1">
-            <div className="size-16 rounded-full bg-white/2 flex items-center justify-center mb-4">
-              <SearchIcon className="size-6 text-white/10" />
+      {/* ── SEARCH RESULTS ── */}
+      <AnimatePresence>
+        {searchQuery && results.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="space-y-6 pt-10"
+          >
+            <div className="flex items-center gap-2 border-b border-white/5 pb-4">
+              <Target className="size-4 text-primary" />
+              <h2 className="text-base font-semibold text-white tracking-tight">
+                Missions Located ({results.length})
+              </h2>
             </div>
-            <h3 className="text-white/60 font-medium">No recent searches</h3>
-            <p className="text-white/20 text-xs mt-1">
-              Your search history will appear here
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {history.map((item, idx) => (
-              <motion.div
-                key={item._id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.05 }}
-                className="group relative p-4 rounded-2xl bg-white/2 border border-white/5 hover:bg-white/4 hover:border-white/10 transition-all cursor-pointer overflow-hidden"
-              >
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-1.5 rounded-lg bg-white/5 text-white/20 group-hover:text-primary transition-colors">
-                      <History className="size-3.5" />
-                    </div>
-                    <button
-                      className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/10 hover:text-red-400 transition-all"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteHistoryItem({ id: item._id });
-                      }}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
-                  </div>
-                  <p className="text-sm font-medium text-white/80 group-hover:text-white transition-colors truncate">
-                    {item.query}
-                  </p>
-                  <p className="text-[10px] text-white/20 mt-1 uppercase tracking-tight">
-                    Searched on {new Date(item.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                {/* Subtle background glow */}
-                <div className="absolute -right-4 -bottom-4 size-20 bg-primary/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-              </motion.div>
-            ))}
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {results.map((bounty, idx) => (
+                <BountyCard 
+                  key={bounty._id} 
+                  bounty={bounty} 
+                  index={idx} 
+                  currentUser={currentUser} 
+                />
+              ))}
+            </div>
+          </motion.div>
         )}
-      </motion.div>
+      </AnimatePresence>
+
+      {/* ── SEARCH HISTORY / RECENT INTERACTIONS ── */}
+      {(!searchQuery || results.length === 0) && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="space-y-6 pt-6"
+        >
+          <div className="flex items-center justify-between border-b border-white/5 pb-4 mt-10">
+            <div className="flex items-center gap-2">
+              <History className="size-4 text-white/40" />
+              <h2 className="text-base font-semibold text-white tracking-tight">
+                Recent Interactions
+              </h2>
+            </div>
+            {history.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-[11px] text-white/30 hover:text-red-400 hover:bg-red-500/5 transition-all gap-1.5"
+                onClick={() => clearHistory()}
+              >
+                <Trash2 className="size-3.5" /> Clear History
+              </Button>
+            )}
+          </div>
+
+          {history.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 px-6 border border-dashed border-white/5 rounded-3xl bg-white/1">
+              <div className="size-16 rounded-full bg-white/2 flex items-center justify-center mb-4">
+                <SearchIcon className="size-6 text-white/10" />
+              </div>
+              <h3 className="text-white/60 font-medium">No recent searches</h3>
+              <p className="text-white/20 text-xs mt-1">
+                Your search history will appear here
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {history.map((item, idx) => (
+                <motion.div
+                  key={item._id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="group relative p-4 rounded-2xl bg-white/2 border border-white/5 hover:bg-white/4 hover:border-white/10 transition-all cursor-pointer overflow-hidden"
+                  onClick={() => setSearchQuery(item.query)}
+                >
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="p-1.5 rounded-lg bg-white/5 text-white/20 group-hover:text-primary transition-colors">
+                        <History className="size-3.5" />
+                      </div>
+                      <button
+                        className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/10 hover:text-red-400 transition-all"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteHistoryItem({ id: item._id });
+                        }}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                    <p className="text-sm font-medium text-white/80 group-hover:text-white transition-colors truncate">
+                      {item.query}
+                    </p>
+                    <p className="text-[10px] text-white/20 mt-1 uppercase tracking-tight">
+                      Searched on {new Date(item.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="absolute -right-4 -bottom-4 size-20 bg-primary/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      )}
     </div>
   );
 };

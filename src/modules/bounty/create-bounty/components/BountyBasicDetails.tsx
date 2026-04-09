@@ -4,15 +4,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Coins, Trophy, X } from "lucide-react";
+import { Users, Coins, Trophy, X, Calendar as CalendarIcon } from "lucide-react";
 import { UploadDropzone } from "@/lib/uploadthing";
 import { toast } from "sonner";
 import Image from "next/image";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { deleteUploadThingFile } from "@/app/api/uploadthing/action";
 
-/**
- * Renders the primary details form for creating a new bounty.
- * Captures title, description, category, required level, cover image, and reward configurations.
- */
 export const BountyBasicDetails = ({ form, rewardPerHunter }: { form: any; rewardPerHunter: number }) => {
   return (
     <>
@@ -95,7 +97,7 @@ export const BountyBasicDetails = ({ form, rewardPerHunter }: { form: any; rewar
                         onKeyDown={(e) => ["e", "E", "+", "-", "."].includes(e.key) && e.preventDefault()}
                         onWheel={(e) => (e.target as HTMLInputElement).blur()}
                         className="h-10 bg-black/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
-                        placeholder="1"
+                        placeholder="0"
                       />
                   </FormControl>
                   <FormMessage />
@@ -103,6 +105,54 @@ export const BountyBasicDetails = ({ form, rewardPerHunter }: { form: any; rewar
               )}
             />
           </div>
+
+          <FormField
+            control={form.control}
+            name="deadline"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Submission Deadline <span className="text-red-500">*</span></FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full h-11 bg-white/5 border-white/10 text-left font-medium text-white/50 hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-300 group",
+                          !field.value && "text-white/30"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a deadline</span>
+                          )}
+                        </div>
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-black/90 border-white/10 backdrop-blur-xl" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date < new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                      className="bg-transparent"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormDescription className="text-[10px] text-white/30 italic">
+                  Once this date passes, no new hunters can join the bounty.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </CardContent>
       </Card>
 
@@ -219,7 +269,25 @@ export const BountyBasicDetails = ({ form, rewardPerHunter }: { form: any; rewar
                   {field.value && (
                     <button 
                        type="button" 
-                       onClick={() => field.onChange("")}
+                       onClick={async () => {
+                         const fileUrl = field.value;
+                         const fileKey = fileUrl.split("/").pop();
+                         
+                         field.onChange(""); // Clear UI immediately
+                         
+                         if (fileKey) {
+                           try {
+                             const result = await deleteUploadThingFile(fileKey);
+                             if (result.success) {
+                               toast.success("Image removed from storage");
+                             } else {
+                               console.error("Failed to delete from storage:", result.error);
+                             }
+                           } catch (error) {
+                             console.error("Deletion error:", error);
+                           }
+                         }
+                       }}
                        className="text-[10px] text-red-400 hover:text-red-300 transition-colors uppercase font-bold tracking-widest flex items-center gap-1 bg-red-400/5 px-2 py-1 rounded"
                     >
                       <X className="w-3 h-3"/> Remove
@@ -234,6 +302,8 @@ export const BountyBasicDetails = ({ form, rewardPerHunter }: { form: any; rewar
                           src={field.value} 
                           alt="Cover preview" 
                           fill 
+                          unoptimized
+                          priority
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">

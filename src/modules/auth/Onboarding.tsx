@@ -381,7 +381,7 @@ const Onboarding = () => {
                   <h1 className="text-left text-2xl font-medium min-h-[1.5em] flex items-center">
                     <Typewriter
                       key={step}
-                      words={["Now lets understand you bettwer !"]}
+                      words={["Now lets understand you better !"]}
                       loop={1}
                       typeSpeed={100}
                       deleteSpeed={0}

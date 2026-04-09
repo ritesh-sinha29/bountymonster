@@ -23,18 +23,15 @@ import {
   Search,
   UserPlus,
   Trophy,
-  UserCircle,
   Zap,
   Crosshair,
   ChevronRight,
   ExternalLink,
-  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 
 const NAV_MAIN = [
   { label: "Home", href: "/home", icon: Home },
@@ -44,10 +41,6 @@ const NAV_MAIN = [
   { label: "Leaderboard", href: "/home/leaderboard", icon: Trophy },
 ];
 
-const NAV_FOOTER = [
-  { label: "Profile", href: "/home/profile", icon: UserCircle },
-   { label: "Favorites", href: "/home/favorites", icon: Star },
-];
 
 const ALL_ROUTES = [
   "/home",
@@ -55,7 +48,6 @@ const ALL_ROUTES = [
   "/home/leaderboard",
   "/home/search",
   "/home/characters",
-  "/home/profile",
   "/home/bounty/create-bounty",
 ];
 
@@ -86,7 +78,7 @@ export const AppSidebar = () => {
   );
   const characterImage = characterObj?.image || Characters[0].image;
   const characterName = characterData?.characterName || "Anonymous";
-  const currentXp = characterData?.xp ?? 0;
+  const currentXp = user?.xp ?? 0;
   const {
     level: currentLevel,
     xpIntoLevel,
@@ -131,7 +123,7 @@ export const AppSidebar = () => {
             </div>
             <div className="flex-1 flex items-start justify-between  min-w-0">
               <div className="flex flex-col gap-1">
-                <p className="text-xl font-bold text-white truncate max-w-[120px]">
+                <p className="text-xl font-semibold text-white truncate max-w-[100px]">
                   {user?.name}
                 </p>
                 <span className="shrink-0 text-[10px] font-mono font-bold text-white px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20">
@@ -215,59 +207,6 @@ export const AppSidebar = () => {
           })}
         </SidebarMenu>
 
-        <div className="my-1 flex items-center gap-2 overflow-hidden">
-          <Separator className="bg-neutral-800 max-w-20" />
-          <span className="text-neutral-400 text-sm font-medium whitespace-nowrap">
-            Quick Links
-          </span>
-          <Separator className="bg-neutral-800 max-w-20" />
-        </div>
-
-        <SidebarMenu className="">
-          {NAV_FOOTER.map(({ label, href, icon: Icon }) => {
-            const active = isActive(href);
-            return (
-              <SidebarMenuItem key={href}>
-                <SidebarMenuButton
-                  asChild
-                  tooltip={label}
-                  isActive={active}
-                  className={`relative flex items-center rounded-xl p-1 text-sm font-medium transition-all duration-200 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-auto overflow-visible ${
-                    active
-                      ? "text-white !bg-transparent"
-                      : "text-white/80 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <Link
-                    href={href}
-                    prefetch={true}
-                    className="w-full flex items-center h-full"
-                  >
-                    {active && (
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl group-data-[collapsible=icon]:hidden" />
-                    )}
-
-                    <div className="relative flex items-center justify-center p-1.5 rounded-lg shrink-0 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:mx-auto bg-transparent">
-                      <Icon
-                        className={`size-[18px] shrink-0 transition-colors ${
-                          active
-                            ? "text-primary drop-shadow-[0_0_8px_rgba(var(--color-primary),0.5)]"
-                            : "text-sidebar-foreground/80"
-                        }`}
-                      />
-                    </div>
-
-                    <span
-                      className={`ml-3 z-10 group-data-[collapsible=icon]:hidden ${active ? "text-white/90 font-bold tracking-wide" : ""}`}
-                    >
-                      {label}
-                    </span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
 
         <Link href="/home/bounty/create-bounty" prefetch={true} className="mt-auto">
           <Button

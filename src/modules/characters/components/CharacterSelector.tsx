@@ -10,11 +10,7 @@ import { useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
-/**
- * Grid-based character selection interface allowing users to
- * browse available characters, preview powers, and equip characters
- * representing their user profile. Trigger corresponding theme updates.
- */
+
 export function CharacterSelector() {
   const currentCharacter = useQuery(api.characters.getCurrentCharacter);
   const changeCharacter = useMutation(api.characters.changeCharacter);
@@ -29,7 +25,6 @@ export function CharacterSelector() {
       await changeCharacter({
         characterName: char.name,
         theme: char.theme,
-        userAvatar: char.image,
       });
       applyCharacterTheme(char.theme as CharacterTheme);
       toast.success(`Character changed to ${char.name}!`);

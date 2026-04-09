@@ -7,10 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-/**
- * Manages dynamic task/quest fields for a bounty form.
- * Allows creators to add, remove, and configure individual sub-tasks required to complete the bounty.
- */
+
 export const BountyTaskFields = ({ form, fields, append, remove, currentTaskXP }: { form: any; fields: any[]; append: any; remove: any; currentTaskXP: number }) => {
   return (
     <div className="space-y-4">

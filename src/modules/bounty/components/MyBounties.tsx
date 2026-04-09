@@ -17,7 +17,7 @@ export const MyBounties = ({ bounties, currentUser }: { bounties: any[], current
   return (
     <>
       {myBounties.map((bounty, index) => (
-        <BountyCard key={bounty._id} bounty={bounty} index={index} />
+        <BountyCard key={bounty._id} bounty={bounty} index={index} currentUser={currentUser} />
       ))}
     </>
   );

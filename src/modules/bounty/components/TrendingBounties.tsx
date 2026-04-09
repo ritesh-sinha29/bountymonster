@@ -16,7 +16,7 @@ export const TrendingBounties = ({ bounties, currentUser }: { bounties: any[], c
   return (
     <>
       {trending.map((bounty, index) => (
-        <BountyCard key={bounty._id} bounty={bounty} index={index} />
+        <BountyCard key={bounty._id} bounty={bounty} index={index} currentUser={currentUser} />
       ))}
     </>
   );

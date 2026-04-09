@@ -11,8 +11,9 @@ import { Loader2 } from "lucide-react";
  */
 export const MyActivity = () => {
   const joinedBounties = useQuery(api.participants.getMyJoinedBounties);
+  const currentUser = useQuery(api.users.getCurrentUser);
 
-  if (joinedBounties === undefined) {
+  if (joinedBounties === undefined || currentUser === undefined) {
     return (
       <div className="col-span-full flex items-center justify-center py-20">
         <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -31,7 +32,7 @@ export const MyActivity = () => {
   return (
     <>
       {joinedBounties.map((bounty: any, index: number) => (
-        <BountyCard key={bounty._id} bounty={bounty} index={index} />
+        <BountyCard key={bounty._id} bounty={bounty} index={index} currentUser={currentUser} />
       ))}
     </>
   );

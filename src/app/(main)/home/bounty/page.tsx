@@ -36,7 +36,7 @@ const BountyPage = () => {
       case "explore":
         return <ExploreBounties bounties={bounties} currentUser={currentUser} />;
       // case "premium":
-      //   return <PremiumBounties bounties={bounties} />;
+      //   return <PremiumBounties bounties={bounties} currentUser={currentUser} />;
       case "played":
         return <MyActivity />;
       case "my":

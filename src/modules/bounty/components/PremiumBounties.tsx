@@ -4,7 +4,7 @@ import { BountyCard } from "./bountyCard";
  * Filtered view that renders bounties passing a high-value threshold (e.g. >= 100).
  * Sorts them strictly by descending reward amount to showcase the most lucrative quests.
  */
-export const PremiumBounties = ({ bounties }: { bounties: any[] }) => {
+export const PremiumBounties = ({ bounties, currentUser }: { bounties: any[], currentUser: any }) => {
   const premium = bounties.filter(bounty => {
     const val = bounty.rewardPerHunter || bounty.reward;
     return val >= 100;
@@ -21,7 +21,7 @@ export const PremiumBounties = ({ bounties }: { bounties: any[] }) => {
   return (
     <>
       {premium.map((bounty, index) => (
-        <BountyCard key={bounty._id} bounty={bounty} index={index} />
+        <BountyCard key={bounty._id} bounty={bounty} index={index} currentUser={currentUser} />
       ))}
     </>
   );

@@ -23,6 +23,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Bounty Monster",
   description: "Bounty Monster",
+  icons: {
+    icon: "/logo.svg",
+  },
 };
 
 export default function RootLayout({
